@@ -239,6 +239,7 @@
   }
   .ok { background: var(--ok-bg); color: var(--ok-ink); display: block !important; border-color: color-mix(in srgb, var(--ok-ink) 25%, transparent); }
   .error { background: var(--err-bg); color: var(--err-ink); display: block !important; border-color: color-mix(in srgb, var(--err-ink) 25%, transparent); }
+  .pending { background: var(--accent-soft); color: var(--accent); display: block !important; border-color: color-mix(in srgb, var(--accent) 25%, transparent); }
 
   .riwayat-scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 320px; }
@@ -294,19 +295,21 @@
     <button type="button" class="btn-primary" id="btnStart" onclick="mulaiScan()">▶ Mulai Scan</button>
     <button type="button" class="btn-ghost" id="btnStop" onclick="hentikanScan()" style="display:none;">Stop</button>
   </div>
-  <p class="hint">Arahkan kamera ke barcode di dalam bingkai. Setelah terbaca, otomatis dikirim sebagai +Qty ke Stok Fisik.</p>
+  <p class="hint">Arahkan kamera ke barcode di dalam bingkai. Setelah terbaca, cek dulu nama &amp; qty-nya di bawah sebelum ditambahkan — tidak langsung masuk ke Stok Fisik.</p>
 </section>
 
 <section class="card">
-  <p class="card-label">Input Manual (cadangan)</p>
-  <label for="kode">Kode / Nama Item</label>
+  <p class="card-label">Kode / Nama Item</p>
   <div class="autocomplete-wrap">
-    <input type="text" id="kode" placeholder="Ketik kode atau nama barang" autocomplete="off">
+    <input type="text" id="kode" placeholder="Hasil scan muncul di sini, atau ketik manual" autocomplete="off">
     <div id="suggestions"></div>
   </div>
   <label for="qty">Qty</label>
   <input type="number" id="qty" class="tabular" value="1" min="1">
-  <button type="button" class="btn-primary" onclick="kirimManual()">Tambahkan ke Stok Fisik</button>
+  <div class="scan-controls">
+    <button type="button" class="btn-primary" onclick="kirimManual()">✓ Tambahkan ke Stok Fisik</button>
+    <button type="button" class="btn-ghost" onclick="batalkanScan()">Batal</button>
+  </div>
   <div id="status" role="status"></div>
 </section>
 
@@ -397,7 +400,7 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
     var petugas = elPetugas.value.trim();
 
     if (!url || !token) {
-      tampilkanStatus('URL Web App dan Token wajib diisi.', false);
+      tampilkanStatus('URL Web App dan Token wajib diisi.', 'error');
       return;
     }
 
@@ -435,7 +438,7 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
       .then(function (data) {
         if (!data || data.success !== true) {
           elItemCountLabel.textContent = '';
-          tampilkanStatus((data && data.message) || 'Gagal memuat daftar barang. Cek URL/Token.', false);
+          tampilkanStatus((data && data.message) || 'Gagal memuat daftar barang. Cek URL/Token.', 'error');
           return;
         }
         daftarItem = data.items || [];
@@ -443,7 +446,7 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
       })
       .catch(function () {
         elItemCountLabel.textContent = '';
-        tampilkanStatus('Gagal terhubung ke Apps Script. Cek URL Web App, Token, dan koneksi internet.', false);
+        tampilkanStatus('Gagal terhubung ke Apps Script. Cek URL Web App, Token, dan koneksi internet.', 'error');
       });
 
     if (!elPetugas.value) {
@@ -504,9 +507,17 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
 
   // ---------- Kirim scan (dipakai oleh kamera & input manual) ----------
 
-  function tampilkanStatus(msg, ok) {
+  function tampilkanStatus(msg, tipe) {
     elStatus.textContent = msg;
-    elStatus.className = ok ? 'ok' : 'error';
+    elStatus.className = tipe;
+  }
+
+  function cariItemByKode(kode) {
+    var k = String(kode || '').trim().toUpperCase();
+    for (var i = 0; i < daftarItem.length; i++) {
+      if (daftarItem[i].kode.trim().toUpperCase() === k) return daftarItem[i];
+    }
+    return null;
   }
 
   function tambahBarisRiwayat(kode, nama, qty, ok) {
@@ -541,11 +552,11 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
     var url = safeGet(LS_URL);
     var token = safeGet(LS_TOKEN);
     if (!url || !token) {
-      tampilkanStatus('Isi dulu URL Web App & Token di Pengaturan Koneksi.', false);
+      tampilkanStatus('Isi dulu URL Web App & Token di Pengaturan Koneksi.', 'error');
       return Promise.resolve();
     }
     if (!kode) {
-      tampilkanStatus('Kode item kosong.', false);
+      tampilkanStatus('Kode item kosong.', 'error');
       return Promise.resolve();
     }
 
@@ -556,29 +567,44 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
       .then(function (res) { return res.json(); })
       .then(function (res) {
         if (res && res.success) {
-          tampilkanStatus(res.nama + ' -> Stok Fisik: ' + res.stokFisikBaru, true);
+          tampilkanStatus(res.nama + ' -> Stok Fisik: ' + res.stokFisikBaru, 'ok');
           tambahBarisRiwayat(kode, res.nama, qty, true);
           if (navigator.vibrate) navigator.vibrate(100);
           getanBunyi();
         } else {
-          tampilkanStatus((res && res.message) || 'Gagal memproses scan.', false);
+          tampilkanStatus((res && res.message) || 'Gagal memproses scan.', 'error');
           tambahBarisRiwayat(kode, '(tidak ditemukan)', qty, false);
           if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
         }
       })
       .catch(function () {
-        tampilkanStatus('Gagal terhubung ke Apps Script saat mengirim scan "' + kode + '".', false);
+        tampilkanStatus('Gagal terhubung ke Apps Script saat mengirim scan "' + kode + '".', 'error');
       });
   }
 
+  // Tombol "Tambahkan ke Stok Fisik" ini dipakai untuk DUA alur sekaligus:
+  // input manual (ketik sendiri), dan mengonfirmasi hasil scan kamera yang
+  // sudah menunggu di kolom Kode/Qty (lihat onScanSukses). Tidak ada yang
+  // terkirim ke Sheet sebelum tombol ini benar-benar ditekan.
   window.kirimManual = function () {
     var kode = elKode.value.trim();
     var qty = Number(elQty.value) || 1;
     sembunyikanSuggestion();
-    prosesKirim(kode, qty, 'manual').then(function () {
+    prosesKirim(kode, qty, 'konfirmasi').then(function () {
       elKode.value = '';
+      elQty.value = 1;
       elKode.focus();
+      scanTerkunci = false;
     });
+  };
+
+  window.batalkanScan = function () {
+    elKode.value = '';
+    elQty.value = 1;
+    sembunyikanSuggestion();
+    elStatus.className = '';
+    elStatus.textContent = '';
+    scanTerkunci = false;
   };
 
   // ---------- Kamera live scan ----------
@@ -590,17 +616,26 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
     return html5QrCode;
   }
 
+  // Kamera TIDAK langsung menambah ke Stok Fisik. Begitu barcode terbaca,
+  // kode-nya diisi ke kolom Kode (+ dicocokkan ke daftar barang untuk
+  // ditampilkan namanya) dan scan berikutnya dikunci sampai petugas menekan
+  // "Tambahkan ke Stok Fisik" (mengirim) atau "Batal" (membuang & lanjut scan).
   function onScanSukses(decodedText) {
     if (scanTerkunci) return;
     scanTerkunci = true;
 
     var kode = decodedText.trim();
-    var qty = Number(elQty.value) || 1;
     elKode.value = kode;
+    sembunyikanSuggestion();
 
-    prosesKirim(kode, qty, 'kamera').then(function () {
-      setTimeout(function () { scanTerkunci = false; }, 1500);
-    });
+    var item = cariItemByKode(kode);
+    if (item) {
+      tampilkanStatus('📦 Terbaca: ' + item.nama + ' (' + item.kode + '). Cek Qty di bawah, lalu tap "Tambahkan ke Stok Fisik".', 'pending');
+    } else {
+      tampilkanStatus('Kode "' + kode + '" belum ada di daftar Master Barang. Cek lagi, atau tap "Batal" untuk scan ulang.', 'pending');
+    }
+
+    if (navigator.vibrate) navigator.vibrate(60);
   }
 
   window.mulaiScan = function () {
@@ -608,7 +643,7 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
     var url = safeGet(LS_URL);
     var token = safeGet(LS_TOKEN);
     if (!url || !token) {
-      tampilkanStatus('Isi dulu URL Web App & Token di Pengaturan Koneksi sebelum scan.', false);
+      tampilkanStatus('Isi dulu URL Web App & Token di Pengaturan Koneksi sebelum scan.', 'error');
       elSettingsBody.classList.add('open');
       elSettingsChevron.classList.add('open');
       return;
@@ -643,7 +678,7 @@ var __Html5QrcodeLibrary__;(()=>{var t={449:function(t,e,r){!function(t){"use st
       elBtnStop.style.display = 'block';
       elReaderPlaceholder.style.display = 'none';
     }).catch(function (err) {
-      tampilkanStatus('Tidak bisa membuka kamera: ' + (err && err.message ? err.message : err) + '. Pastikan izin kamera diaktifkan untuk halaman ini.', false);
+      tampilkanStatus('Tidak bisa membuka kamera: ' + (err && err.message ? err.message : err) + '. Pastikan izin kamera diaktifkan untuk halaman ini.', 'error');
     });
   };
 
