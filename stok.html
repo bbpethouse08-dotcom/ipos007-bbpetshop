@@ -172,18 +172,19 @@
   <p class="card-label">Mode Kerja</p>
   <div class="mode-row">
     <button type="button" class="mode-btn aktif" id="btnModeOpname" onclick="pilihMode('opname')">📷 Scan Opname</button>
-    <button type="button" class="mode-btn" id="btnModeTransfer" onclick="pilihMode('transfer')">🔄 Transfer Stok</button>
+    <button type="button" class="mode-btn" id="btnModeTransfer" onclick="pilihMode('transfer')">🔄 Transfer</button>
+    <button type="button" class="mode-btn" id="btnModePembelian" onclick="pilihMode('pembelian')">🛒 Pembelian</button>
   </div>
   <p class="hint" id="modeHint">Scan barang untuk mencatat hasil hitung fisik ke Stok Opname.</p>
 </section>
 
 <section class="card" id="cardLokasiOpname">
-  <p class="card-label">Lokasi Scan</p>
+  <p class="card-label" id="lokasiCardLabel">Lokasi Scan</p>
   <div class="lokasi-row" id="lokasiRow">
     <button type="button" class="lokasi-btn aktif" data-val="UTM" onclick="pilihLokasi('UTM')">🏪 UTM (Display)</button>
     <button type="button" class="lokasi-btn" data-val="GDG" onclick="pilihLokasi('GDG')">📦 GDG (Gudang)</button>
   </div>
-  <p class="hint">Hasil scan berikutnya masuk ke Stok Fisik lokasi ini.</p>
+  <p class="hint" id="lokasiCardHint">Hasil scan berikutnya masuk ke Stok Fisik lokasi ini.</p>
 </section>
 
 <section class="card" id="cardArahTransfer" style="display:none;">
@@ -193,6 +194,21 @@
     <button type="button" class="lokasi-btn" data-val="UTM_KE_GDG" onclick="pilihArah('UTM_KE_GDG')">🏪→📦 UTM ke Gudang</button>
   </div>
   <p class="hint">Stok akan dipindahkan sesuai arah ini setiap scan/tambah.</p>
+</section>
+
+<section class="card" id="cardPembelianExtra" style="display:none;">
+  <p class="card-label">Detail Pembelian</p>
+  <label for="belNamaBarang">Nama Barang (khusus kalau kode baru/belum terdaftar)</label>
+  <input type="text" id="belNamaBarang" placeholder="Kosongkan kalau barangnya sudah ada">
+  <label for="belHargaBeli">Harga Beli (per satuan)</label>
+  <input type="number" id="belHargaBeli" class="tabular" placeholder="0">
+  <label for="belSupplier">Nama Supplier</label>
+  <input type="text" id="belSupplier" placeholder="mis. CV Sumber Pakan">
+  <label for="belCatatan">Catatan (opsional)</label>
+  <input type="text" id="belCatatan" placeholder="mis. no. nota, termin bayar">
+  <label class="checkbox-item-inline" style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:12.5px;color:var(--ink-dim);margin-top:12px;">
+    <input type="checkbox" id="belUpdateHargaPokok" checked style="width:auto;"> Update Harga Pokok di Master Barang ke harga beli ini
+  </label>
 </section>
 
 <section class="card">
@@ -266,9 +282,13 @@
 
   var elBtnModeOpname = document.getElementById('btnModeOpname');
   var elBtnModeTransfer = document.getElementById('btnModeTransfer');
+  var elBtnModePembelian = document.getElementById('btnModePembelian');
   var elModeHint = document.getElementById('modeHint');
   var elCardLokasiOpname = document.getElementById('cardLokasiOpname');
   var elCardArahTransfer = document.getElementById('cardArahTransfer');
+  var elCardPembelianExtra = document.getElementById('cardPembelianExtra');
+  var elLokasiCardLabel = document.getElementById('lokasiCardLabel');
+  var elLokasiCardHint = document.getElementById('lokasiCardHint');
   var elLokasiRow = document.getElementById('lokasiRow');
   var elArahRow = document.getElementById('arahRow');
 
@@ -348,16 +368,36 @@
     mode = m;
     elBtnModeOpname.classList.toggle('aktif', m === 'opname');
     elBtnModeTransfer.classList.toggle('aktif', m === 'transfer');
-    elCardLokasiOpname.style.display = (m === 'opname') ? 'block' : 'none';
+    elBtnModePembelian.classList.toggle('aktif', m === 'pembelian');
+
+    elCardLokasiOpname.style.display = (m === 'opname' || m === 'pembelian') ? 'block' : 'none';
     elCardArahTransfer.style.display = (m === 'transfer') ? 'block' : 'none';
-    elModeHint.textContent = (m === 'opname')
-      ? 'Scan barang untuk mencatat hasil hitung fisik ke Stok Opname.'
-      : 'Scan barang untuk memindahkan stok antar lokasi (tidak mengubah total stok, cuma pindah tempat).';
-    elBtnAksi.textContent = (m === 'opname') ? '✓ Tambahkan ke Stok Fisik' : '🔄 Proses Transfer';
-    elRiwayatLabel.textContent = (m === 'opname') ? 'Riwayat Scan' : 'Riwayat Transfer';
-    elRiwayatHead.innerHTML = (m === 'opname')
-      ? '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Lok</th><th></th></tr>'
-      : '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Arah</th><th></th></tr>';
+    elCardPembelianExtra.style.display = (m === 'pembelian') ? 'block' : 'none';
+
+    if (m === 'pembelian') {
+      elLokasiCardLabel.textContent = 'Lokasi Tujuan';
+      elLokasiCardHint.textContent = 'Stok bertambah di lokasi ini setelah pembelian diproses.';
+    } else {
+      elLokasiCardLabel.textContent = 'Lokasi Scan';
+      elLokasiCardHint.textContent = 'Hasil scan berikutnya masuk ke Stok Fisik lokasi ini.';
+    }
+
+    if (m === 'opname') elModeHint.textContent = 'Scan barang untuk mencatat hasil hitung fisik ke Stok Opname.';
+    else if (m === 'transfer') elModeHint.textContent = 'Scan barang untuk memindahkan stok antar lokasi (tidak mengubah total stok, cuma pindah tempat).';
+    else elModeHint.textContent = 'Scan atau ketik kode barang yang baru datang dari supplier untuk menambah stok.';
+
+    if (m === 'opname') elBtnAksi.textContent = '✓ Tambahkan ke Stok Fisik';
+    else if (m === 'transfer') elBtnAksi.textContent = '🔄 Proses Transfer';
+    else elBtnAksi.textContent = '🛒 Catat Pembelian';
+
+    if (m === 'opname') elRiwayatLabel.textContent = 'Riwayat Scan';
+    else if (m === 'transfer') elRiwayatLabel.textContent = 'Riwayat Transfer';
+    else elRiwayatLabel.textContent = 'Riwayat Pembelian';
+
+    if (m === 'opname') elRiwayatHead.innerHTML = '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Lok</th><th></th></tr>';
+    else if (m === 'transfer') elRiwayatHead.innerHTML = '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Arah</th><th></th></tr>';
+    else elRiwayatHead.innerHTML = '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Harga Beli</th><th>Supplier</th><th></th></tr>';
+
     sembunyikanInfoStok();
     elKode.value = '';
     muatDaftarBarang();
@@ -514,7 +554,7 @@
     }).catch(function () {});
   };
 
-  // ---------- Proses aksi (Opname atau Transfer) ----------
+  // ---------- Proses aksi (Opname, Transfer, atau Pembelian) ----------
 
   window.prosesAksi = function () {
     var kode = elKode.value.trim();
@@ -525,8 +565,18 @@
     var promise;
     if (mode === 'opname') {
       promise = fetch(apiUrl('scan', { kode: kode, qty: qty, petugas: petugas, lokasi: lokasiAktif }));
-    } else {
+    } else if (mode === 'transfer') {
       promise = fetch(apiUrl('transfer', { kode: kode, qty: qty, petugas: petugas, arah: arahAktif }));
+    } else {
+      var hargaBeli = document.getElementById('belHargaBeli').value;
+      var namaBarang = document.getElementById('belNamaBarang').value.trim();
+      var supplier = document.getElementById('belSupplier').value.trim();
+      var catatan = document.getElementById('belCatatan').value.trim();
+      var updateHargaPokok = document.getElementById('belUpdateHargaPokok').checked;
+      promise = fetch(apiUrl('pembelian', {
+        kode: kode, jumlah: qty, hargaBeli: hargaBeli, lokasi: lokasiAktif,
+        namaBarang: namaBarang, supplier: supplier, catatan: catatan, updateHargaPokok: updateHargaPokok
+      }));
     }
 
     promise.then(function (res) { return res.json(); })
@@ -534,8 +584,13 @@
         if (res && res.success) {
           if (mode === 'opname') {
             tampilkanStatus(res.nama + ' [' + res.lokasi + '] -> Fisik Total: ' + res.stokFisikTotal, 'ok');
-          } else {
+          } else if (mode === 'transfer') {
             tampilkanStatus(res.nama + ' [' + res.label + '] -> Stok asal: ' + res.stokAsalBaru + ', tujuan: ' + res.stokTujuanBaru, 'ok');
+          } else {
+            tampilkanStatus(res.nama + ' [' + res.lokasi + '] +' + qty + ' -> Stok jadi ' + res.stokBaru, 'ok');
+            document.getElementById('belNamaBarang').value = '';
+            document.getElementById('belHargaBeli').value = '';
+            document.getElementById('belCatatan').value = '';
           }
           elKode.value = ''; elQty.value = 1;
           sembunyikanInfoStok();
@@ -553,7 +608,7 @@
   function muatRiwayat() {
     var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
     if (!url || !token) return;
-    var action = (mode === 'opname') ? 'history' : 'riwayattransfer';
+    var action = (mode === 'opname') ? 'history' : (mode === 'transfer') ? 'riwayattransfer' : 'riwayatpembelian';
     fetch(apiUrl(action, { limit: 30 }))
       .then(function (res) { return res.json(); })
       .then(function (data) { if (data && data.success) renderRiwayat(data.riwayat || []); })
@@ -570,15 +625,35 @@
       var tdWaktu = document.createElement('td'); tdWaktu.textContent = r.waktu; tr.appendChild(tdWaktu);
       var tdKode = document.createElement('td'); tdKode.className = 'mono'; tdKode.textContent = r.kode; tr.appendChild(tdKode);
       var tdNama = document.createElement('td'); tdNama.textContent = r.nama; tr.appendChild(tdNama);
-      var tdQty = document.createElement('td');
-      var pill = document.createElement('span'); pill.className = 'qty-pill'; pill.textContent = '+' + r.qty;
-      tdQty.appendChild(pill); tr.appendChild(tdQty);
-      var tdKet = document.createElement('td'); tdKet.textContent = (mode === 'opname') ? r.lokasi : r.label; tr.appendChild(tdKet);
-      var tdAksi = document.createElement('td');
-      var btn = document.createElement('button');
-      btn.type = 'button'; btn.className = 'riwayat-item-hapus'; btn.textContent = (mode === 'opname') ? 'Hapus' : 'Batalkan';
-      btn.addEventListener('click', function () { batalkanRiwayat(r.id, btn); });
-      tdAksi.appendChild(btn); tr.appendChild(tdAksi);
+
+      if (mode === 'pembelian') {
+        var tdQtyB = document.createElement('td');
+        var pillB = document.createElement('span'); pillB.className = 'qty-pill'; pillB.textContent = '+' + r.jumlah;
+        tdQtyB.appendChild(pillB); tr.appendChild(tdQtyB);
+        var tdHarga = document.createElement('td'); tdHarga.className = 'tabular'; tdHarga.textContent = 'Rp' + (r.hargaBeli || 0).toLocaleString('id-ID'); tr.appendChild(tdHarga);
+        var tdSupplier = document.createElement('td'); tdSupplier.textContent = r.supplier || '-'; tr.appendChild(tdSupplier);
+        var tdAksiB = document.createElement('td');
+        if (r.dibatalkan) {
+          var badge = document.createElement('span'); badge.style.fontSize = '10.5px'; badge.style.color = 'var(--err-ink)'; badge.style.fontWeight = '600'; badge.textContent = 'Dibatalkan';
+          tdAksiB.appendChild(badge);
+        } else {
+          var btnB = document.createElement('button');
+          btnB.type = 'button'; btnB.className = 'riwayat-item-hapus'; btnB.textContent = 'Batalkan';
+          btnB.addEventListener('click', function () { batalkanRiwayat(r.id, btnB); });
+          tdAksiB.appendChild(btnB);
+        }
+        tr.appendChild(tdAksiB);
+      } else {
+        var tdQty = document.createElement('td');
+        var pill = document.createElement('span'); pill.className = 'qty-pill'; pill.textContent = '+' + r.qty;
+        tdQty.appendChild(pill); tr.appendChild(tdQty);
+        var tdKet = document.createElement('td'); tdKet.textContent = (mode === 'opname') ? r.lokasi : r.label; tr.appendChild(tdKet);
+        var tdAksi = document.createElement('td');
+        var btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'riwayat-item-hapus'; btn.textContent = (mode === 'opname') ? 'Hapus' : 'Batalkan';
+        btn.addEventListener('click', function () { batalkanRiwayat(r.id, btn); });
+        tdAksi.appendChild(btn); tr.appendChild(tdAksi);
+      }
       elRiwayatBody.appendChild(tr);
     });
   }
@@ -586,10 +661,13 @@
   function batalkanRiwayat(id, btn) {
     var konfirmasi = (mode === 'opname')
       ? 'Hapus scan ini? Stok fisik terkait akan otomatis dikurangi kembali.'
-      : 'Batalkan transfer ini? Stok di kedua lokasi akan dikembalikan.';
+      : (mode === 'transfer')
+        ? 'Batalkan transfer ini? Stok di kedua lokasi akan dikembalikan.'
+        : 'Batalkan pembelian ini? Stok yang tadi ditambahkan akan dikurangi kembali.';
     if (!confirm(konfirmasi)) return;
+    var labelTombol = (mode === 'opname') ? 'Hapus' : 'Batalkan';
     btn.disabled = true; btn.textContent = '...';
-    var action = (mode === 'opname') ? 'delete' : 'deletetransfer';
+    var action = (mode === 'opname') ? 'delete' : (mode === 'transfer') ? 'deletetransfer' : 'batalpembelian';
     fetch(apiUrl(action, { id: id }))
       .then(function (res) { return res.json(); })
       .then(function (res) {
@@ -599,12 +677,12 @@
           muatRiwayat();
         } else {
           tampilkanStatus((res && res.message) || 'Gagal memproses.', 'error');
-          btn.disabled = false; btn.textContent = (mode === 'opname') ? 'Hapus' : 'Batalkan';
+          btn.disabled = false; btn.textContent = labelTombol;
         }
       })
       .catch(function () {
         tampilkanStatus('Gagal terhubung ke Apps Script.', 'error');
-        btn.disabled = false; btn.textContent = (mode === 'opname') ? 'Hapus' : 'Batalkan';
+        btn.disabled = false; btn.textContent = labelTombol;
       });
   }
 
