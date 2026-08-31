@@ -171,9 +171,10 @@
 <section class="card">
   <p class="card-label">Mode Kerja</p>
   <div class="mode-row">
-    <button type="button" class="mode-btn aktif" id="btnModeOpname" onclick="pilihMode('opname')">📷 Scan Opname</button>
+    <button type="button" class="mode-btn aktif" id="btnModeOpname" onclick="pilihMode('opname')">📷 Opname</button>
     <button type="button" class="mode-btn" id="btnModeTransfer" onclick="pilihMode('transfer')">🔄 Transfer</button>
-    <button type="button" class="mode-btn" id="btnModePembelian" onclick="pilihMode('pembelian')">🛒 Pembelian</button>
+    <button type="button" class="mode-btn" id="btnModePembelian" onclick="pilihMode('pembelian')">🛒 Beli</button>
+    <button type="button" class="mode-btn" id="btnModeHarga" onclick="pilihMode('harga')">💲 Harga</button>
   </div>
   <p class="hint" id="modeHint">Scan barang untuk mencatat hasil hitung fisik ke Stok Opname.</p>
 </section>
@@ -211,6 +212,16 @@
   </label>
 </section>
 
+<section class="card" id="cardHargaExtra" style="display:none;">
+  <p class="card-label">Detail Harga</p>
+  <div class="info-stok" id="infoHargaSaatIni" style="display:none;"></div>
+  <label for="hgMarginTarget">Target Margin (%) — opsional, buat hitung otomatis</label>
+  <input type="number" id="hgMarginTarget" class="tabular" placeholder="mis. 30" oninput="hitungDariMargin()">
+  <label for="hgHargaJualBaru">Harga Jual Baru</label>
+  <input type="number" id="hgHargaJualBaru" class="tabular" placeholder="0" oninput="hitungMarginDariHarga()">
+  <p class="hint" id="hgMarginBaruHint">Margin dari harga di atas: —</p>
+</section>
+
 <section class="card">
   <p class="card-label">Kamera</p>
   <div class="reader-frame">
@@ -230,7 +241,7 @@
     <div id="suggestions"></div>
   </div>
   <div class="info-stok" id="infoStok"></div>
-  <div class="qty-row">
+  <div class="qty-row" id="qtyRow">
     <div style="flex:1;">
       <label for="qty">Qty</label>
       <input type="number" id="qty" class="tabular" value="1" min="1">
@@ -283,14 +294,21 @@
   var elBtnModeOpname = document.getElementById('btnModeOpname');
   var elBtnModeTransfer = document.getElementById('btnModeTransfer');
   var elBtnModePembelian = document.getElementById('btnModePembelian');
+  var elBtnModeHarga = document.getElementById('btnModeHarga');
   var elModeHint = document.getElementById('modeHint');
   var elCardLokasiOpname = document.getElementById('cardLokasiOpname');
   var elCardArahTransfer = document.getElementById('cardArahTransfer');
   var elCardPembelianExtra = document.getElementById('cardPembelianExtra');
+  var elCardHargaExtra = document.getElementById('cardHargaExtra');
   var elLokasiCardLabel = document.getElementById('lokasiCardLabel');
   var elLokasiCardHint = document.getElementById('lokasiCardHint');
   var elLokasiRow = document.getElementById('lokasiRow');
   var elArahRow = document.getElementById('arahRow');
+  var elQtyRow = document.getElementById('qtyRow');
+  var elInfoHargaSaatIni = document.getElementById('infoHargaSaatIni');
+  var elHgMarginTarget = document.getElementById('hgMarginTarget');
+  var elHgHargaJualBaru = document.getElementById('hgHargaJualBaru');
+  var elHgMarginBaruHint = document.getElementById('hgMarginBaruHint');
 
   var elKode = document.getElementById('kode');
   var elQty = document.getElementById('qty');
@@ -369,10 +387,13 @@
     elBtnModeOpname.classList.toggle('aktif', m === 'opname');
     elBtnModeTransfer.classList.toggle('aktif', m === 'transfer');
     elBtnModePembelian.classList.toggle('aktif', m === 'pembelian');
+    elBtnModeHarga.classList.toggle('aktif', m === 'harga');
 
     elCardLokasiOpname.style.display = (m === 'opname' || m === 'pembelian') ? 'block' : 'none';
     elCardArahTransfer.style.display = (m === 'transfer') ? 'block' : 'none';
     elCardPembelianExtra.style.display = (m === 'pembelian') ? 'block' : 'none';
+    elCardHargaExtra.style.display = (m === 'harga') ? 'block' : 'none';
+    elQtyRow.style.display = (m === 'harga') ? 'none' : 'flex';
 
     if (m === 'pembelian') {
       elLokasiCardLabel.textContent = 'Lokasi Tujuan';
@@ -384,21 +405,27 @@
 
     if (m === 'opname') elModeHint.textContent = 'Scan barang untuk mencatat hasil hitung fisik ke Stok Opname.';
     else if (m === 'transfer') elModeHint.textContent = 'Scan barang untuk memindahkan stok antar lokasi (tidak mengubah total stok, cuma pindah tempat).';
-    else elModeHint.textContent = 'Scan atau ketik kode barang yang baru datang dari supplier untuk menambah stok.';
+    else if (m === 'pembelian') elModeHint.textContent = 'Scan atau ketik kode barang yang baru datang dari supplier untuk menambah stok.';
+    else elModeHint.textContent = 'Cari atau scan barang untuk menentukan Harga Jual-nya. Otomatis disinkronkan ke UTM & GDG.';
 
     if (m === 'opname') elBtnAksi.textContent = '✓ Tambahkan ke Stok Fisik';
     else if (m === 'transfer') elBtnAksi.textContent = '🔄 Proses Transfer';
-    else elBtnAksi.textContent = '🛒 Catat Pembelian';
+    else if (m === 'pembelian') elBtnAksi.textContent = '🛒 Catat Pembelian';
+    else elBtnAksi.textContent = '💾 Simpan Harga Jual';
 
     if (m === 'opname') elRiwayatLabel.textContent = 'Riwayat Scan';
     else if (m === 'transfer') elRiwayatLabel.textContent = 'Riwayat Transfer';
-    else elRiwayatLabel.textContent = 'Riwayat Pembelian';
+    else if (m === 'pembelian') elRiwayatLabel.textContent = 'Riwayat Pembelian';
+    else elRiwayatLabel.textContent = 'Riwayat Perubahan Harga';
 
     if (m === 'opname') elRiwayatHead.innerHTML = '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Lok</th><th></th></tr>';
     else if (m === 'transfer') elRiwayatHead.innerHTML = '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Arah</th><th></th></tr>';
-    else elRiwayatHead.innerHTML = '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Harga Beli</th><th>Supplier</th><th></th></tr>';
+    else if (m === 'pembelian') elRiwayatHead.innerHTML = '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Harga Beli</th><th>Supplier</th><th></th></tr>';
+    else elRiwayatHead.innerHTML = '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Harga Lama</th><th>Harga Baru</th><th>Margin</th><th>Petugas</th></tr>';
 
     sembunyikanInfoStok();
+    elHgMarginTarget.value = ''; elHgHargaJualBaru.value = ''; elHgMarginBaruHint.textContent = 'Margin dari harga di atas: —';
+    elInfoHargaSaatIni.style.display = 'none';
     elKode.value = '';
     muatDaftarBarang();
     muatRiwayat();
@@ -477,15 +504,56 @@
         '<div class="baris"><span class="label">Nama</span><span class="nilai">' + escapeHtml(item.nama) + '</span></div>' +
         '<div class="baris"><span class="label">Stok Fisik UTM</span><span class="nilai">' + item.stokFisikUtm + '</span></div>' +
         '<div class="baris"><span class="label">Stok Fisik GDG</span><span class="nilai">' + item.stokFisikGdg + '</span></div>';
+      elInfoStok.style.display = 'block';
+    } else if (mode === 'harga') {
+      var hargaPokok = item.hargaPokok || 0;
+      var hargaJual = item.hargaJual || 0;
+      var marginSaatIni = hargaPokok > 0 ? Math.round(((hargaJual - hargaPokok) / hargaPokok) * 1000) / 10 : 0;
+      elInfoHargaSaatIni.innerHTML =
+        '<div class="baris"><span class="label">Nama</span><span class="nilai">' + escapeHtml(item.nama) + '</span></div>' +
+        '<div class="baris"><span class="label">Harga Pokok</span><span class="nilai">Rp' + hargaPokok.toLocaleString('id-ID') + '</span></div>' +
+        '<div class="baris"><span class="label">Harga Jual Saat Ini</span><span class="nilai">Rp' + hargaJual.toLocaleString('id-ID') + '</span></div>' +
+        '<div class="baris"><span class="label">Margin Saat Ini</span><span class="nilai">' + marginSaatIni + '%</span></div>';
+      elInfoHargaSaatIni.style.display = 'block';
+      elHgHargaJualBaru.value = hargaJual || '';
+      elHgMarginTarget.value = '';
+      hitungMarginDariHarga();
+      sembunyikanInfoStok();
     } else {
       elInfoStok.innerHTML =
         '<div class="baris"><span class="label">Nama</span><span class="nilai">' + escapeHtml(item.nama) + '</span></div>' +
         '<div class="baris"><span class="label">Stok UTM</span><span class="nilai">' + item.stokUtm + '</span></div>' +
         '<div class="baris"><span class="label">Stok GDG</span><span class="nilai">' + item.stokGdg + '</span></div>';
+      elInfoStok.style.display = 'block';
     }
-    elInfoStok.style.display = 'block';
   }
   function sembunyikanInfoStok() { elInfoStok.style.display = 'none'; elInfoStok.innerHTML = ''; }
+
+  // ---------- Kalkulator margin (mode Harga) ----------
+
+  window.hitungDariMargin = function () {
+    var kode = elKode.value.trim();
+    var item = cariItemByKode(kode);
+    var margin = Number(elHgMarginTarget.value);
+    if (!item || !elHgMarginTarget.value || isNaN(margin)) return;
+    var hargaPokok = item.hargaPokok || 0;
+    var hargaBaru = Math.round((hargaPokok * (1 + margin / 100)) / 100) * 100;
+    elHgHargaJualBaru.value = hargaBaru;
+    hitungMarginDariHarga();
+  };
+
+  window.hitungMarginDariHarga = function () {
+    var kode = elKode.value.trim();
+    var item = cariItemByKode(kode);
+    var hargaBaru = Number(elHgHargaJualBaru.value);
+    if (!item || !elHgHargaJualBaru.value || isNaN(hargaBaru)) {
+      elHgMarginBaruHint.textContent = 'Margin dari harga di atas: —';
+      return;
+    }
+    var hargaPokok = item.hargaPokok || 0;
+    var margin = hargaPokok > 0 ? Math.round(((hargaBaru - hargaPokok) / hargaPokok) * 1000) / 10 : 0;
+    elHgMarginBaruHint.textContent = 'Margin dari harga di atas: ' + margin + '%';
+  };
 
   // ---------- Kamera ----------
 
@@ -567,7 +635,7 @@
       promise = fetch(apiUrl('scan', { kode: kode, qty: qty, petugas: petugas, lokasi: lokasiAktif }));
     } else if (mode === 'transfer') {
       promise = fetch(apiUrl('transfer', { kode: kode, qty: qty, petugas: petugas, arah: arahAktif }));
-    } else {
+    } else if (mode === 'pembelian') {
       var hargaBeli = document.getElementById('belHargaBeli').value;
       var namaBarang = document.getElementById('belNamaBarang').value.trim();
       var supplier = document.getElementById('belSupplier').value.trim();
@@ -577,6 +645,10 @@
         kode: kode, jumlah: qty, hargaBeli: hargaBeli, lokasi: lokasiAktif,
         namaBarang: namaBarang, supplier: supplier, catatan: catatan, updateHargaPokok: updateHargaPokok
       }));
+    } else {
+      var hargaJualBaru = elHgHargaJualBaru.value;
+      if (!hargaJualBaru) { tampilkanStatus('Isi dulu Harga Jual Baru (atau Target Margin).', 'error'); return; }
+      promise = fetch(apiUrl('updatehargajual', { kode: kode, hargaJual: hargaJualBaru, petugas: petugas }));
     }
 
     promise.then(function (res) { return res.json(); })
@@ -586,11 +658,14 @@
             tampilkanStatus(res.nama + ' [' + res.lokasi + '] -> Fisik Total: ' + res.stokFisikTotal, 'ok');
           } else if (mode === 'transfer') {
             tampilkanStatus(res.nama + ' [' + res.label + '] -> Stok asal: ' + res.stokAsalBaru + ', tujuan: ' + res.stokTujuanBaru, 'ok');
-          } else {
+          } else if (mode === 'pembelian') {
             tampilkanStatus(res.nama + ' [' + res.lokasi + '] +' + qty + ' -> Stok jadi ' + res.stokBaru, 'ok');
             document.getElementById('belNamaBarang').value = '';
             document.getElementById('belHargaBeli').value = '';
             document.getElementById('belCatatan').value = '';
+          } else {
+            tampilkanStatus(res.nama + ': Rp' + res.hargaJualLama.toLocaleString('id-ID') + ' -> Rp' + res.hargaJualBaru.toLocaleString('id-ID') + ' (margin ' + res.marginBaru + '%)', 'ok');
+            elHgMarginTarget.value = ''; elHgHargaJualBaru.value = ''; elInfoHargaSaatIni.style.display = 'none';
           }
           elKode.value = ''; elQty.value = 1;
           sembunyikanInfoStok();
@@ -608,7 +683,7 @@
   function muatRiwayat() {
     var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
     if (!url || !token) return;
-    var action = (mode === 'opname') ? 'history' : (mode === 'transfer') ? 'riwayattransfer' : 'riwayatpembelian';
+    var action = (mode === 'opname') ? 'history' : (mode === 'transfer') ? 'riwayattransfer' : (mode === 'pembelian') ? 'riwayatpembelian' : 'riwayatharga';
     fetch(apiUrl(action, { limit: 30 }))
       .then(function (res) { return res.json(); })
       .then(function (data) { if (data && data.success) renderRiwayat(data.riwayat || []); })
@@ -643,6 +718,11 @@
           tdAksiB.appendChild(btnB);
         }
         tr.appendChild(tdAksiB);
+      } else if (mode === 'harga') {
+        var tdLama = document.createElement('td'); tdLama.className = 'tabular'; tdLama.textContent = 'Rp' + (r.hargaJualLama || 0).toLocaleString('id-ID'); tr.appendChild(tdLama);
+        var tdBaru = document.createElement('td'); tdBaru.className = 'tabular'; tdBaru.textContent = 'Rp' + (r.hargaJualBaru || 0).toLocaleString('id-ID'); tr.appendChild(tdBaru);
+        var tdMargin = document.createElement('td'); tdMargin.className = 'tabular'; tdMargin.textContent = (r.marginBaru || 0) + '%'; tr.appendChild(tdMargin);
+        var tdPetugas = document.createElement('td'); tdPetugas.textContent = r.petugas || '-'; tr.appendChild(tdPetugas);
       } else {
         var tdQty = document.createElement('td');
         var pill = document.createElement('span'); pill.className = 'qty-pill'; pill.textContent = '+' + r.qty;
