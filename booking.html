@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking — B&B Petshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #f5f3ee; --surface: #ffffff; --surface-sunken: #f0eee8;
+    --ink: #201f1a; --ink-dim: #726d60; --line: #e4e0d5;
+    --accent: #2c4bd4; --accent-ink: #ffffff; --accent-soft: #e8ecfc;
+    --ok-ink: #1c6b3c; --ok-bg: #e3f3e6; --err-ink: #af2a1e; --err-bg: #fbe8e4;
+    --focus-ring: #2c4bd4;
+    --shadow: 0 1px 2px rgba(32,31,26,.04), 0 6px 20px rgba(32,31,26,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14140f; --surface: #1d1c17; --surface-sunken: #201f19;
+      --ink: #f1efe6; --ink-dim: #9a9587; --line: #34322a;
+      --accent: #7d93f0; --accent-ink: #12142a; --accent-soft: #232a4a;
+      --ok-ink: #7fd39a; --ok-bg: #17301f; --err-ink: #f0958a; --err-bg: #3a1f1b;
+      --focus-ring: #7d93f0; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px; line-height: 1.45; padding: 20px 14px 64px;
+    max-width: 520px; margin-left: auto; margin-right: auto;
+  }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  header.app-header { text-align: center; margin-bottom: 20px; }
+  header.app-header h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+  header.app-header p { font-size: 13.5px; color: var(--ink-dim); margin: 0; }
+
+  .mode-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .mode-btn {
+    flex: 1; padding: 13px 8px; border-radius: 11px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .mode-btn.aktif { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  section.card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-dim); margin: 0 0 12px; }
+
+  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-dim); margin: 14px 0 5px; }
+  label:first-of-type { margin-top: 0; }
+  input, select, textarea {
+    width: 100%; padding: 12px; font-size: 15px; font-family: inherit;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--surface-sunken); color: var(--ink);
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  input::placeholder, textarea::placeholder { color: var(--ink-dim); opacity: .8; }
+  input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+
+  .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+  .checkbox-item {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 9px; background: var(--surface-sunken); font-size: 13.5px; cursor: pointer;
+  }
+  .checkbox-item input { width: auto; margin: 0; }
+
+  button { font-family: inherit; font-size: 15px; font-weight: 700; padding: 14px; border: none; border-radius: 11px; cursor: pointer; width: 100%; transition: transform .06s ease, opacity .15s ease; }
+  button:active { transform: scale(.985); }
+  button:disabled { opacity: .5; cursor: default; }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); margin-top: 18px; }
+
+  .welcome-note { margin-top: 8px; padding: 9px 11px; border-radius: 8px; background: var(--ok-bg); color: var(--ok-ink); font-size: 12.5px; font-weight: 600; display: none; }
+  .welcome-note.show { display: block; }
+
+  .harga-box {
+    margin-top: 16px; padding: 14px; border-radius: 11px; background: var(--accent-soft);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .harga-box .lbl { font-size: 12.5px; color: var(--ink-dim); font-weight: 600; }
+  .harga-box .val { font-size: 20px; font-weight: 700; font-family: "IBM Plex Mono", monospace; color: var(--accent); }
+
+  #status { margin-top: 14px; padding: 11px 13px; border-radius: 10px; font-size: 13.5px; display: none; font-weight: 600; }
+  .error { background: var(--err-bg); color: var(--err-ink); display: block !important; }
+
+  .receipt {
+    background: var(--ok-bg); border: 1px dashed var(--ok-ink); border-radius: 14px; padding: 18px;
+    text-align: center; margin-top: 14px;
+  }
+  .receipt .cek { font-size: 34px; margin-bottom: 6px; }
+  .receipt h3 { margin: 0 0 6px; font-size: 17px; color: var(--ok-ink); }
+  .receipt p { margin: 3px 0; font-size: 13.5px; color: var(--ink); }
+  .receipt .idbox {
+    display: inline-block; margin-top: 8px; padding: 6px 14px; border-radius: 999px;
+    background: var(--surface); font-family: "IBM Plex Mono", monospace; font-weight: 700; font-size: 13px;
+  }
+
+  .footer-note { text-align: center; font-size: 11.5px; color: var(--ink-dim); margin-top: 20px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>🐾 B&amp;B Petshop</h1>
+  <p>Booking Grooming &amp; Penitipan — cepat, tanpa perlu chat dulu</p>
+</header>
+
+<div class="mode-row">
+  <button type="button" class="mode-btn aktif" id="btnTabGrooming" onclick="pilihTab('grooming')">✂️ Grooming</button>
+  <button type="button" class="mode-btn" id="btnTabPenitipan" onclick="pilihTab('penitipan')">🏨 Penitipan</button>
+</div>
+
+<!-- ===================== FORM GROOMING ===================== -->
+<section class="card" id="formGrooming">
+  <p class="card-label">Data Pemilik</p>
+  <label for="gNoHp">No HP / WhatsApp</label>
+  <input type="tel" id="gNoHp" placeholder="08xxxxxxxxxx" inputmode="numeric">
+  <div class="welcome-note" id="gWelcome"></div>
+
+  <label for="gNamaPemilik">Nama Pemilik</label>
+  <input type="text" id="gNamaPemilik" placeholder="Nama lengkap Anda">
+
+  <p class="card-label" style="margin-top:20px;">Data Hewan</p>
+  <label for="gNamaHewan">Nama Hewan</label>
+  <input type="text" id="gNamaHewan" placeholder="mis. Ucil">
+
+  <label for="gRas">Ras (opsional)</label>
+  <input type="text" id="gRas" placeholder="mis. Poodle, Persia, Domestik">
+
+  <label for="gJenisHewan">Jenis Hewan</label>
+  <select id="gJenisHewan" onchange="onJenisHewanGroomingBerubah()">
+    <option value="Kucing">Kucing</option>
+    <option value="Anjing">Anjing</option>
+  </select>
+
+  <div id="gUkuranWrap" style="display:none;">
+    <label for="gUkuran">Ukuran</label>
+    <select id="gUkuran" onchange="hitungHargaGrooming()">
+      <option value="Kecil">Kecil</option>
+      <option value="Medium">Medium</option>
+      <option value="Besar">Besar</option>
+    </select>
+  </div>
+
+  <p class="card-label" style="margin-top:20px;">Layanan</p>
+  <label for="gJenisGrooming">Jenis Grooming</label>
+  <select id="gJenisGrooming" onchange="hitungHargaGrooming()">
+    <option value="Grooming Basic">Grooming Basic</option>
+    <option value="Grooming Medicated">Grooming Medicated</option>
+    <option value="Grooming Komplit">Grooming Komplit</option>
+  </select>
+
+  <label>Add-on Treatment (opsional)</label>
+  <div class="checkbox-grid">
+    <label class="checkbox-item"><input type="checkbox" value="Bersih Telinga"> Bersih Telinga</label>
+    <label class="checkbox-item"><input type="checkbox" value="Potong Kuku"> Potong Kuku</label>
+    <label class="checkbox-item"><input type="checkbox" value="Parfum"> Parfum</label>
+    <label class="checkbox-item"><input type="checkbox" value="Potong Bulu"> Potong Bulu</label>
+  </div>
+
+  <label for="gTanggal">Tanggal Booking</label>
+  <input type="date" id="gTanggal">
+
+  <label for="gCatatan">Catatan Khusus (opsional)</label>
+  <textarea id="gCatatan" placeholder="mis. takut hairdryer, agak galak, dsb."></textarea>
+
+  <div class="harga-box">
+    <span class="lbl">Estimasi Harga</span>
+    <span class="val tabular" id="gHargaEstimasi">Rp0</span>
+  </div>
+
+  <button type="button" class="btn-primary" id="btnSubmitGrooming" onclick="submitGrooming()">Kirim Booking Grooming</button>
+  <div id="statusGrooming"></div>
+  <div id="receiptGrooming"></div>
+</section>
+
+<!-- ===================== FORM PENITIPAN ===================== -->
+<section class="card" id="formPenitipan" style="display:none;">
+  <p class="card-label">Data Pemilik</p>
+  <label for="pNoHp">No HP / WhatsApp</label>
+  <input type="tel" id="pNoHp" placeholder="08xxxxxxxxxx" inputmode="numeric">
+  <div class="welcome-note" id="pWelcome"></div>
+
+  <label for="pNamaPemilik">Nama Pemilik</label>
+  <input type="text" id="pNamaPemilik" placeholder="Nama lengkap Anda">
+
+  <p class="card-label" style="margin-top:20px;">Data Hewan</p>
+  <label for="pNamaHewan">Nama Hewan</label>
+  <input type="text" id="pNamaHewan" placeholder="mis. Leonard">
+
+  <label for="pRas">Ras (opsional)</label>
+  <input type="text" id="pRas" placeholder="mis. Persian Flat Nose">
+
+  <label for="pJenisHewan">Jenis Hewan</label>
+  <select id="pJenisHewan" onchange="onJenisHewanPenitipanBerubah()">
+    <option value="Kucing">Kucing</option>
+    <option value="Anjing">Anjing</option>
+  </select>
+
+  <div id="pUkuranWrap" style="display:none;">
+    <label for="pUkuran">Ukuran</label>
+    <select id="pUkuran" onchange="hitungHargaPenitipan()">
+      <option value="Kecil">Kecil</option>
+      <option value="Medium">Medium</option>
+      <option value="Besar">Besar</option>
+    </select>
+  </div>
+
+  <p class="card-label" style="margin-top:20px;">Paket &amp; Jadwal</p>
+  <label for="pPaket">Paket Penitipan</label>
+  <select id="pPaket" onchange="hitungHargaPenitipan()">
+    <option value="Pet Hotel + Pakan">Pet Hotel + Pakan</option>
+    <option value="Pet Hotel Non Pakan">Pet Hotel Non Pakan</option>
+  </select>
+
+  <label for="pTanggalTitip">Tanggal Titip</label>
+  <input type="date" id="pTanggalTitip">
+
+  <label for="pTanggalJemput">Tanggal Jemput (estimasi)</label>
+  <input type="date" id="pTanggalJemput">
+
+  <label class="checkbox-item" style="margin-top:14px;">
+    <input type="checkbox" id="pSekalianGrooming"> Sekalian grooming saat dititip
+  </label>
+
+  <label for="pCatatan">Catatan Khusus (opsional)</label>
+  <textarea id="pCatatan" placeholder="mis. jadwal makan, obat rutin, kebiasaan khusus"></textarea>
+
+  <div class="harga-box">
+    <span class="lbl">Estimasi Harga / hari</span>
+    <span class="val tabular" id="pHargaEstimasi">Rp0</span>
+  </div>
+
+  <button type="button" class="btn-primary" id="btnSubmitPenitipan" onclick="submitPenitipan()">Kirim Booking Penitipan</button>
+  <div id="statusPenitipan"></div>
+  <div id="receiptPenitipan"></div>
+</section>
+
+<p class="footer-note">Booking ini akan dikonfirmasi oleh tim B&amp;B Petshop. Estimasi harga bisa berubah setelah dicek langsung oleh petugas.</p>
+
+<script>
+(function () {
+  'use strict';
+
+  // =======================================================
+  //  WAJIB DIISI SEBELUM UPLOAD -- ganti dua baris di bawah
+  //  ini dengan URL Web App & BOOKING_TOKEN Anda sendiri
+  //  (BOOKING_TOKEN harus SAMA PERSIS dengan yang ada di
+  //  Code.gs, dan HARUS BEDA dari SCAN_TOKEN staf).
+  // =======================================================
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
+  var BOOKING_TOKEN = 'GANTI_DENGAN_BOOKING_TOKEN_ANDA';
+
+  var elBtnTabGrooming = document.getElementById('btnTabGrooming');
+  var elBtnTabPenitipan = document.getElementById('btnTabPenitipan');
+  var elFormGrooming = document.getElementById('formGrooming');
+  var elFormPenitipan = document.getElementById('formPenitipan');
+
+  var daftarHargaGrooming = [];
+  var daftarHargaPenitipan = [];
+
+  function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function formatRp(n) { return 'Rp' + (Number(n) || 0).toLocaleString('id-ID'); }
+
+  function apiUrl(action, extraParams) {
+    var qs = 'api=' + encodeURIComponent(action) + '&token=' + encodeURIComponent(BOOKING_TOKEN);
+    if (extraParams) Object.keys(extraParams).forEach(function (k) { qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(extraParams[k]); });
+    return WEB_APP_URL + '?' + qs;
+  }
+
+  // ---------- Tab ----------
+
+  window.pilihTab = function (tab) {
+    elBtnTabGrooming.classList.toggle('aktif', tab === 'grooming');
+    elBtnTabPenitipan.classList.toggle('aktif', tab === 'penitipan');
+    elFormGrooming.style.display = (tab === 'grooming') ? 'block' : 'none';
+    elFormPenitipan.style.display = (tab === 'penitipan') ? 'block' : 'none';
+  };
+
+  // ---------- Muat daftar harga ----------
+
+  function muatHarga() {
+    fetch(apiUrl('hargagrooming'))
+      .then(function (res) { return res.json(); })
+      .then(function (data) { daftarHargaGrooming = (data && data.harga) || []; hitungHargaGrooming(); })
+      .catch(function () {});
+
+    fetch(apiUrl('hargapenitipan'))
+      .then(function (res) { return res.json(); })
+      .then(function (data) { daftarHargaPenitipan = (data && data.harga) || []; hitungHargaPenitipan(); })
+      .catch(function () {});
+  }
+
+  // ---------- Grooming ----------
+
+  window.onJenisHewanGroomingBerubah = function () {
+    var isAnjing = document.getElementById('gJenisHewan').value === 'Anjing';
+    document.getElementById('gUkuranWrap').style.display = isAnjing ? 'block' : 'none';
+    hitungHargaGrooming();
+  };
+
+  window.hitungHargaGrooming = function () {
+    var jenisHewan = document.getElementById('gJenisHewan').value;
+    var jenisGrooming = document.getElementById('gJenisGrooming').value;
+    var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('gUkuran').value : '';
+    var found = daftarHargaGrooming.find(function (h) {
+      return h.jenisHewan === jenisHewan && h.jenisGrooming === jenisGrooming && (h.ukuran || '') === ukuran;
+    });
+    document.getElementById('gHargaEstimasi').textContent = formatRp(found ? found.harga : 0);
+  };
+
+  var timerCariPelangganG = null;
+  document.getElementById('gNoHp').addEventListener('input', function () {
+    clearTimeout(timerCariPelangganG);
+    var noHp = this.value.trim();
+    if (noHp.length < 8) { document.getElementById('gWelcome').classList.remove('show'); return; }
+    timerCariPelangganG = setTimeout(function () { cariPelangganUntuk('g', noHp); }, 500);
+  });
+
+  function cariPelangganUntuk(prefix, noHp) {
+    fetch(apiUrl('caripelanggan', { noHp: noHp }))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        var elWelcome = document.getElementById(prefix + 'Welcome');
+        if (data && data.success && data.ditemukan) {
+          document.getElementById(prefix + 'NamaPemilik').value = data.namaPemilik || '';
+          elWelcome.textContent = '👋 Selamat datang kembali, ' + data.namaPemilik + '!';
+          elWelcome.classList.add('show');
+        } else {
+          elWelcome.classList.remove('show');
+        }
+      })
+      .catch(function () {});
+  }
+
+  window.submitGrooming = function () {
+    var elStatus = document.getElementById('statusGrooming');
+    var elBtn = document.getElementById('btnSubmitGrooming');
+    elStatus.className = ''; elStatus.textContent = '';
+
+    var noHp = document.getElementById('gNoHp').value.trim();
+    var namaHewan = document.getElementById('gNamaHewan').value.trim();
+    var tanggal = document.getElementById('gTanggal').value;
+
+    if (!noHp) { elStatus.className = 'error'; elStatus.textContent = 'No HP wajib diisi.'; return; }
+    if (!namaHewan) { elStatus.className = 'error'; elStatus.textContent = 'Nama hewan wajib diisi.'; return; }
+    if (!tanggal) { elStatus.className = 'error'; elStatus.textContent = 'Tanggal booking wajib diisi.'; return; }
+
+    var addOn = Array.prototype.slice.call(document.querySelectorAll('#formGrooming .checkbox-grid input:checked'))
+      .map(function (cb) { return cb.value; }).join(', ');
+
+    var jenisHewan = document.getElementById('gJenisHewan').value;
+    var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('gUkuran').value : '';
+
+    elBtn.disabled = true; elBtn.textContent = 'Mengirim...';
+
+    fetch(apiUrl('bookinggrooming', {
+      noHp: noHp,
+      namaPemilik: document.getElementById('gNamaPemilik').value.trim(),
+      namaHewan: namaHewan,
+      ras: document.getElementById('gRas').value.trim(),
+      jenisHewan: jenisHewan,
+      jenisGrooming: document.getElementById('gJenisGrooming').value,
+      addOn: addOn,
+      ukuran: ukuran,
+      catatan: document.getElementById('gCatatan').value.trim(),
+      tanggalBooking: tanggal
+    }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        elBtn.disabled = false; elBtn.textContent = 'Kirim Booking Grooming';
+        if (res && res.success) {
+          document.getElementById('receiptGrooming').innerHTML =
+            '<div class="receipt"><div class="cek">✅</div><h3>Booking Diterima!</h3>' +
+            '<p>' + escapeHtml(namaHewan) + ' — ' + escapeHtml(document.getElementById('gJenisGrooming').value) + '</p>' +
+            '<p>Tanggal: ' + escapeHtml(tanggal) + '</p>' +
+            '<p>Estimasi: ' + formatRp(res.estimasiHarga) + '</p>' +
+            '<div class="idbox">' + escapeHtml(res.idBooking) + '</div>' +
+            '<p style="margin-top:10px;font-size:12px;">Simpan kode ini sebagai bukti booking Anda.</p></div>';
+          elFormGrooming.querySelectorAll('input[type=text], input[type=tel], textarea').forEach(function (el) { el.value = ''; });
+          document.querySelectorAll('#formGrooming .checkbox-grid input').forEach(function (cb) { cb.checked = false; });
+          document.getElementById('gTanggal').value = '';
+          document.getElementById('gWelcome').classList.remove('show');
+        } else {
+          elStatus.className = 'error'; elStatus.textContent = (res && res.message) || 'Gagal mengirim booking. Coba lagi.';
+        }
+      })
+      .catch(function () {
+        elBtn.disabled = false; elBtn.textContent = 'Kirim Booking Grooming';
+        elStatus.className = 'error'; elStatus.textContent = 'Gagal terhubung ke server. Cek koneksi internet Anda.';
+      });
+  };
+
+  // ---------- Penitipan ----------
+
+  window.onJenisHewanPenitipanBerubah = function () {
+    var isAnjing = document.getElementById('pJenisHewan').value === 'Anjing';
+    document.getElementById('pUkuranWrap').style.display = isAnjing ? 'block' : 'none';
+    hitungHargaPenitipan();
+  };
+
+  window.hitungHargaPenitipan = function () {
+    var jenisHewan = document.getElementById('pJenisHewan').value;
+    var paket = document.getElementById('pPaket').value;
+    var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('pUkuran').value : '';
+    var found = daftarHargaPenitipan.find(function (h) {
+      return h.jenisHewan === jenisHewan && h.paketPenitipan === paket && (h.ukuran || '') === ukuran;
+    });
+    document.getElementById('pHargaEstimasi').textContent = formatRp(found ? found.harga : 0);
+  };
+
+  var timerCariPelangganP = null;
+  document.getElementById('pNoHp').addEventListener('input', function () {
+    clearTimeout(timerCariPelangganP);
+    var noHp = this.value.trim();
+    if (noHp.length < 8) { document.getElementById('pWelcome').classList.remove('show'); return; }
+    timerCariPelangganP = setTimeout(function () { cariPelangganUntuk('p', noHp); }, 500);
+  });
+
+  window.submitPenitipan = function () {
+    var elStatus = document.getElementById('statusPenitipan');
+    var elBtn = document.getElementById('btnSubmitPenitipan');
+    elStatus.className = ''; elStatus.textContent = '';
+
+    var noHp = document.getElementById('pNoHp').value.trim();
+    var namaHewan = document.getElementById('pNamaHewan').value.trim();
+    var tanggalTitip = document.getElementById('pTanggalTitip').value;
+
+    if (!noHp) { elStatus.className = 'error'; elStatus.textContent = 'No HP wajib diisi.'; return; }
+    if (!namaHewan) { elStatus.className = 'error'; elStatus.textContent = 'Nama hewan wajib diisi.'; return; }
+    if (!tanggalTitip) { elStatus.className = 'error'; elStatus.textContent = 'Tanggal titip wajib diisi.'; return; }
+
+    var jenisHewan = document.getElementById('pJenisHewan').value;
+    var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('pUkuran').value : '';
+
+    elBtn.disabled = true; elBtn.textContent = 'Mengirim...';
+
+    fetch(apiUrl('bookingpenitipan', {
+      noHp: noHp,
+      namaPemilik: document.getElementById('pNamaPemilik').value.trim(),
+      namaHewan: namaHewan,
+      ras: document.getElementById('pRas').value.trim(),
+      jenisHewan: jenisHewan,
+      paketPenitipan: document.getElementById('pPaket').value,
+      ukuran: ukuran,
+      catatan: document.getElementById('pCatatan').value.trim(),
+      tanggalTitip: tanggalTitip,
+      tanggalJemputEstimasi: document.getElementById('pTanggalJemput').value,
+      sekalianGrooming: document.getElementById('pSekalianGrooming').checked ? 'true' : 'false'
+    }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        elBtn.disabled = false; elBtn.textContent = 'Kirim Booking Penitipan';
+        if (res && res.success) {
+          document.getElementById('receiptPenitipan').innerHTML =
+            '<div class="receipt"><div class="cek">✅</div><h3>Booking Diterima!</h3>' +
+            '<p>' + escapeHtml(namaHewan) + ' — ' + escapeHtml(document.getElementById('pPaket').value) + '</p>' +
+            '<p>Titip: ' + escapeHtml(tanggalTitip) + '</p>' +
+            '<p>Estimasi: ' + formatRp(res.estimasiHarga) + ' / hari</p>' +
+            '<div class="idbox">' + escapeHtml(res.idPenitipan) + '</div>' +
+            '<p style="margin-top:10px;font-size:12px;">Simpan kode ini sebagai bukti booking Anda.</p></div>';
+          elFormPenitipan.querySelectorAll('input[type=text], input[type=tel], textarea').forEach(function (el) { el.value = ''; });
+          document.getElementById('pSekalianGrooming').checked = false;
+          document.getElementById('pTanggalTitip').value = '';
+          document.getElementById('pTanggalJemput').value = '';
+          document.getElementById('pWelcome').classList.remove('show');
+        } else {
+          elStatus.className = 'error'; elStatus.textContent = (res && res.message) || 'Gagal mengirim booking. Coba lagi.';
+        }
+      })
+      .catch(function () {
+        elBtn.disabled = false; elBtn.textContent = 'Kirim Booking Penitipan';
+        elStatus.className = 'error'; elStatus.textContent = 'Gagal terhubung ke server. Cek koneksi internet Anda.';
+      });
+  };
+
+  // ---------- Init ----------
+
+  muatHarga();
+})();
+</script>
+</body>
+</html>
