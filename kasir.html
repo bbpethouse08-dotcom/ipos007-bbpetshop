@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kasir — B&B Petshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #f5f3ee; --surface: #ffffff; --surface-sunken: #f0eee8;
+    --ink: #201f1a; --ink-dim: #726d60; --line: #e4e0d5;
+    --accent: #2c4bd4; --accent-ink: #ffffff; --accent-soft: #e8ecfc;
+    --ok-ink: #1c6b3c; --ok-bg: #e3f3e6; --err-ink: #af2a1e; --err-bg: #fbe8e4;
+    --focus-ring: #2c4bd4;
+    --shadow: 0 1px 2px rgba(32,31,26,.04), 0 6px 20px rgba(32,31,26,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14140f; --surface: #1d1c17; --surface-sunken: #201f19;
+      --ink: #f1efe6; --ink-dim: #9a9587; --line: #34322a;
+      --accent: #7d93f0; --accent-ink: #12142a; --accent-soft: #232a4a;
+      --ok-ink: #7fd39a; --ok-bg: #17301f; --err-ink: #f0958a; --err-bg: #3a1f1b;
+      --focus-ring: #7d93f0; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px; line-height: 1.45; padding: 16px 14px 64px;
+    max-width: 560px; margin-left: auto; margin-right: auto;
+  }
+  .kode-mono, input#webUrl, input#token, .suggestion-kode, td.mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  header.app-header {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line);
+  }
+  header.app-header h1 { font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .item-pill {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; font-weight: 600; color: var(--ink-dim);
+    background: var(--surface-sunken); border: 1px solid var(--line); border-radius: 999px;
+    padding: 3px 10px; white-space: nowrap;
+  }
+
+  nav.tabbar { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+  nav.tabbar a {
+    flex: none; padding: 9px 14px; font-size: 13.5px; font-weight: 600; color: var(--ink-dim);
+    text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  nav.tabbar a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section.card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-dim); margin: 0 0 12px; }
+
+  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-dim); margin: 12px 0 5px; }
+  label:first-of-type { margin-top: 0; }
+  input, select {
+    width: 100%; padding: 11px 12px; font-size: 15px; font-family: inherit;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--surface-sunken); color: var(--ink);
+  }
+  input::placeholder { color: var(--ink-dim); opacity: .8; }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+
+  button { font-family: inherit; font-size: 14.5px; font-weight: 600; padding: 12px; border: none; border-radius: 9px; cursor: pointer; width: 100%; transition: transform .06s ease, opacity .15s ease; }
+  button:active { transform: scale(.985); }
+  button:disabled { opacity: .45; cursor: default; }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); margin-top: 14px; }
+  .btn-ghost { background: transparent; color: var(--ink-dim); border: 1px solid var(--line); font-weight: 500; padding: 10px; width: auto; }
+
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .toggle-row .card-label { margin: 0; }
+  .chevron { color: var(--ink-dim); font-size: 11px; transition: transform .15s ease; }
+  .chevron.open { transform: rotate(90deg); }
+  .settings-body { display: none; margin-top: 4px; }
+  .settings-body.open { display: block; }
+  .hint { font-size: 11.5px; color: var(--ink-dim); margin-top: 8px; line-height: 1.5; }
+
+  .reader-frame { position: relative; border-radius: 11px; overflow: hidden; background: #0a0a08; min-height: 200px; }
+  #reader { width: 100%; }
+  #reader video { display: block; width: 100%; border-radius: 11px; }
+  .reader-frame::before {
+    content: ""; position: absolute; inset: 14%; border-radius: 10px;
+    border: 2px solid rgba(255,255,255,.55); pointer-events: none; z-index: 2;
+  }
+  .reader-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(241,239,230,.5); font-size: 13px; z-index: 1; }
+
+  .scan-controls { display: flex; gap: 8px; margin-top: 12px; }
+  .scan-controls button { margin-top: 0; }
+  .scan-controls .btn-primary { flex: 2; }
+  .scan-controls .btn-ghost { flex: 1; }
+
+  .autocomplete-wrap { position: relative; }
+  #suggestions {
+    position: absolute; left: 0; right: 0; top: 100%; background: var(--surface);
+    border: 1px solid var(--line); border-top: none; border-radius: 0 0 9px 9px;
+    max-height: 230px; overflow-y: auto; z-index: 50; display: none; box-shadow: var(--shadow);
+  }
+  .suggestion-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--line); }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover, .suggestion-item.active { background: var(--accent-soft); }
+  .suggestion-kode { font-weight: 600; font-size: 13px; }
+  .suggestion-nama { font-size: 12px; color: var(--ink-dim); margin-top: 1px; }
+  .suggestion-stok { font-size: 11px; color: var(--ink-dim); margin-top: 1px; }
+
+  .qty-row { display: flex; gap: 8px; }
+  .qty-row input#qty { max-width: 90px; }
+
+  #status { margin-top: 12px; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; display: none; font-weight: 600; border: 1px solid transparent; }
+  .ok { background: var(--ok-bg); color: var(--ok-ink); display: block !important; }
+  .error { background: var(--err-bg); color: var(--err-ink); display: block !important; }
+  .pending { background: var(--accent-soft); color: var(--accent); display: block !important; }
+
+  .info-stok { margin-top: 10px; padding: 10px 12px; border-radius: 9px; background: var(--accent-soft); font-size: 12.5px; display: none; }
+  .info-stok .baris { display: flex; justify-content: space-between; padding: 2px 0; }
+  .info-stok .label { color: var(--ink-dim); }
+  .info-stok .nilai { font-weight: 600; font-family: "IBM Plex Mono", monospace; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td, th { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+  th { color: var(--ink-dim); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; }
+  tr:last-child td { border-bottom: none; }
+  .cart-qty { width: 56px; padding: 6px 8px; font-size: 13px; text-align: center; }
+  .cart-hapus { background: none; border: none; color: var(--err-ink); font-size: 16px; cursor: pointer; padding: 2px 6px; width: auto; }
+  .cart-total-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .cart-total-row .label { font-size: 13px; color: var(--ink-dim); font-weight: 600; }
+  .cart-total-row .value { font-size: 22px; font-weight: 700; font-family: "IBM Plex Mono", monospace; }
+  .empty-hint { color: var(--ink-dim); font-size: 13px; text-align: center; padding: 14px 0; }
+
+  .receipt { background: var(--surface-sunken); border: 1px dashed var(--line); border-radius: 10px; padding: 14px; margin-top: 12px; font-size: 13px; }
+  .receipt h3 { margin: 0 0 8px; font-size: 14px; }
+  .receipt .baris { display: flex; justify-content: space-between; padding: 3px 0; }
+  .receipt .total { font-weight: 700; border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 6px; }
+
+  .riwayat-item-hapus { background: none; border: none; color: var(--err-ink); font-size: 12px; cursor: pointer; text-decoration: underline; padding: 2px 4px; width: auto; }
+  .riwayat-scroll { overflow-x: auto; }
+  table.riwayat { min-width: 400px; }
+  .dibatalkan-badge { font-size: 10.5px; color: var(--err-ink); font-weight: 600; }
+
+  .footer-note { text-align: center; font-size: 11px; color: var(--ink-dim); margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>💰 Kasir</h1>
+  <span class="item-pill tabular" id="itemCountLabel">memuat…</span>
+</header>
+
+<nav class="tabbar">
+  <a href="index.html">🏠 Menu</a>
+  <a href="kasir.html" class="active">💰 Kasir</a>
+  <a href="stok.html">📦 Stok</a>
+  <a href="laporan.html">📊 Laporan</a>
+</nav>
+
+<section class="card">
+  <div class="toggle-row" id="settingsToggle">
+    <p class="card-label">Pengaturan Koneksi</p>
+    <span class="chevron" id="settingsChevron">▶</span>
+  </div>
+  <div class="settings-body" id="settingsBody">
+    <label for="webUrl">URL Web App Apps Script</label>
+    <input type="text" id="webUrl" class="kode-mono" placeholder="https://script.google.com/macros/s/xxx/exec">
+    <label for="token">Token Rahasia</label>
+    <input type="text" id="token" class="kode-mono" placeholder="Token dari SCAN_TOKEN di Code.gs">
+    <label for="petugas">Nama Petugas</label>
+    <input type="text" id="petugas" placeholder="mis. Adi">
+    <button type="button" class="btn-primary" onclick="simpanPengaturan()">Simpan &amp; Muat Barang</button>
+    <p class="hint">Pengaturan sama dipakai di semua halaman (Menu, Kasir, Stok, Laporan).</p>
+  </div>
+</section>
+
+<section class="card">
+  <p class="card-label">Scan Barcode</p>
+  <div class="reader-frame">
+    <div id="reader"></div>
+    <div class="reader-placeholder" id="readerPlaceholder">Tekan "Mulai Scan" untuk membuka kamera</div>
+  </div>
+  <div class="scan-controls">
+    <button type="button" class="btn-primary" id="btnStart" onclick="mulaiScan()">▶ Mulai Scan</button>
+    <button type="button" class="btn-ghost" id="btnStop" onclick="hentikanScan()" style="display:none;">Stop</button>
+  </div>
+  <p class="hint">Arahkan kamera ke barcode barang. Barang otomatis masuk ke keranjang begitu terbaca (qty 1) — tinggal ubah qty di keranjang kalau perlu.</p>
+</section>
+
+<section class="card">
+  <p class="card-label">Tambah Item Manual</p>
+  <div class="autocomplete-wrap">
+    <input type="text" id="kode" placeholder="Ketik kode atau nama barang" autocomplete="off">
+    <div id="suggestions"></div>
+  </div>
+  <div class="info-stok" id="infoStok"></div>
+  <div class="qty-row">
+    <div style="flex:1;">
+      <label for="qty">Qty</label>
+      <input type="number" id="qty" class="tabular" value="1" min="1">
+    </div>
+  </div>
+  <button type="button" class="btn-primary" onclick="tambahManual()">＋ Tambah ke Keranjang</button>
+  <div id="status" role="status"></div>
+</section>
+
+<section class="card">
+  <p class="card-label">Keranjang</p>
+  <div id="keranjangWrap">
+    <p class="empty-hint" id="keranjangEmpty">Keranjang masih kosong. Scan atau cari barang di atas.</p>
+    <table id="tabelKeranjang" style="display:none;">
+      <thead><tr><th>Barang</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
+      <tbody id="keranjangBody"></tbody>
+    </table>
+  </div>
+  <div class="cart-total-row">
+    <span class="label">Total</span>
+    <span class="value tabular" id="cartTotal">Rp0</span>
+  </div>
+</section>
+
+<section class="card">
+  <p class="card-label">Pembayaran</p>
+  <label for="namaPembeli">Nama Pembeli (opsional)</label>
+  <input type="text" id="namaPembeli" placeholder="Umum">
+  <label for="noHpPembeli">No HP (opsional)</label>
+  <input type="text" id="noHpPembeli" class="kode-mono" placeholder="08xxxxxxxxxx">
+  <label for="metodeBayar">Metode Bayar</label>
+  <select id="metodeBayar" onchange="toggleUangDiterima()">
+    <option value="Cash">Cash</option>
+    <option value="QRIS">QRIS</option>
+    <option value="Debit">Debit</option>
+    <option value="Transfer">Transfer</option>
+  </select>
+  <div id="cashFields">
+    <label for="uangDiterima">Uang Diterima</label>
+    <input type="number" id="uangDiterima" class="tabular" placeholder="0" oninput="hitungKembalian()">
+    <p class="hint" id="kembalianHint">Kembalian: Rp0</p>
+  </div>
+  <label for="catatan">Catatan (opsional)</label>
+  <input type="text" id="catatan" placeholder="mis. minta bungkus kado">
+  <button type="button" class="btn-primary" id="btnBayar" onclick="prosesPembayaran()">Proses Pembayaran</button>
+  <div id="receiptWrap"></div>
+</section>
+
+<section class="card">
+  <p class="card-label">Riwayat Transaksi</p>
+  <div class="riwayat-scroll">
+    <table class="riwayat" id="tabelRiwayat">
+      <thead><tr><th>Waktu</th><th>ID</th><th>Total</th><th>Metode</th><th></th></tr></thead>
+      <tbody id="riwayatBody"></tbody>
+    </table>
+  </div>
+  <p class="empty-hint" id="riwayatEmpty">Belum ada transaksi.</p>
+</section>
+
+<p class="footer-note">Setiap transaksi otomatis mengurangi Stok di Master Barang UTM.</p>
+
+<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var LS_URL = 'bb_staff_web_url';
+  var LS_TOKEN = 'bb_staff_token';
+  var LS_PETUGAS = 'bb_staff_petugas';
+
+  var elSettingsToggle = document.getElementById('settingsToggle');
+  var elSettingsBody = document.getElementById('settingsBody');
+  var elSettingsChevron = document.getElementById('settingsChevron');
+  var elWebUrl = document.getElementById('webUrl');
+  var elToken = document.getElementById('token');
+  var elPetugas = document.getElementById('petugas');
+  var elItemCountLabel = document.getElementById('itemCountLabel');
+
+  var elKode = document.getElementById('kode');
+  var elQty = document.getElementById('qty');
+  var elSuggestions = document.getElementById('suggestions');
+  var elInfoStok = document.getElementById('infoStok');
+  var elStatus = document.getElementById('status');
+
+  var elBtnStart = document.getElementById('btnStart');
+  var elBtnStop = document.getElementById('btnStop');
+  var elReaderPlaceholder = document.getElementById('readerPlaceholder');
+
+  var elKeranjangEmpty = document.getElementById('keranjangEmpty');
+  var elTabelKeranjang = document.getElementById('tabelKeranjang');
+  var elKeranjangBody = document.getElementById('keranjangBody');
+  var elCartTotal = document.getElementById('cartTotal');
+
+  var elNamaPembeli = document.getElementById('namaPembeli');
+  var elNoHpPembeli = document.getElementById('noHpPembeli');
+  var elMetodeBayar = document.getElementById('metodeBayar');
+  var elCashFields = document.getElementById('cashFields');
+  var elUangDiterima = document.getElementById('uangDiterima');
+  var elKembalianHint = document.getElementById('kembalianHint');
+  var elCatatan = document.getElementById('catatan');
+  var elBtnBayar = document.getElementById('btnBayar');
+  var elReceiptWrap = document.getElementById('receiptWrap');
+
+  var elRiwayatBody = document.getElementById('riwayatBody');
+  var elRiwayatEmpty = document.getElementById('riwayatEmpty');
+
+  var daftarBarang = [];
+  var keranjang = []; // { kode, nama, satuan, hargaJual, stok, qty }
+  var html5QrCode = null;
+  var kameraAktif = false;
+  var scanTerkunci = false;
+
+  function safeGet(key) { try { return localStorage.getItem(key) || ''; } catch (err) { return ''; } }
+  function safeSet(key, val) { try { localStorage.setItem(key, val); } catch (err) {} }
+  function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function formatRp(n) { return 'Rp' + (Number(n) || 0).toLocaleString('id-ID'); }
+
+  function tampilkanStatus(pesan, tipe) {
+    elStatus.className = tipe;
+    elStatus.textContent = pesan;
+  }
+
+  // ---------- Pengaturan ----------
+
+  elSettingsToggle.addEventListener('click', function () {
+    var buka = !elSettingsBody.classList.contains('open');
+    elSettingsBody.classList.toggle('open', buka);
+    elSettingsChevron.classList.toggle('open', buka);
+  });
+
+  function muatPengaturanTersimpan() {
+    var url = safeGet(LS_URL);
+    var token = safeGet(LS_TOKEN);
+    var petugas = safeGet(LS_PETUGAS);
+    elWebUrl.value = url;
+    elToken.value = token;
+    elPetugas.value = petugas;
+
+    if (!url || !token) {
+      elSettingsBody.classList.add('open');
+      elSettingsChevron.classList.add('open');
+    } else {
+      muatDaftarBarang();
+      muatRiwayat();
+    }
+  }
+
+  window.simpanPengaturan = function () {
+    var url = elWebUrl.value.trim().replace(/\/+$/, '');
+    var token = elToken.value.trim();
+    var petugas = elPetugas.value.trim();
+    if (!url || !token) { tampilkanStatus('URL Web App dan Token wajib diisi.', 'error'); return; }
+    safeSet(LS_URL, url);
+    safeSet(LS_TOKEN, token);
+    safeSet(LS_PETUGAS, petugas);
+    elSettingsBody.classList.remove('open');
+    elSettingsChevron.classList.remove('open');
+    muatDaftarBarang();
+    muatRiwayat();
+  };
+
+  function apiUrl(action, extraParams) {
+    var url = safeGet(LS_URL);
+    var token = safeGet(LS_TOKEN);
+    var qs = 'api=' + encodeURIComponent(action) + '&token=' + encodeURIComponent(token);
+    if (extraParams) {
+      Object.keys(extraParams).forEach(function (k) {
+        qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(extraParams[k]);
+      });
+    }
+    return url + '?' + qs;
+  }
+
+  // ---------- Daftar barang (Master Barang UTM) ----------
+
+  function muatDaftarBarang() {
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
+    if (!url || !token) return;
+    elItemCountLabel.textContent = '(memuat...)';
+
+    fetch(apiUrl('kasirlist'))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data || data.success !== true) {
+          elItemCountLabel.textContent = '';
+          tampilkanStatus((data && data.message) || 'Gagal memuat daftar barang. Cek URL/Token.', 'error');
+          return;
+        }
+        daftarBarang = data.items || [];
+        elItemCountLabel.textContent = daftarBarang.length + ' barang';
+      })
+      .catch(function () {
+        elItemCountLabel.textContent = '';
+        tampilkanStatus('Gagal terhubung ke Apps Script. Cek URL/Token & koneksi internet.', 'error');
+      });
+  }
+
+  function cariItemByKode(kode) {
+    var target = String(kode || '').trim().toUpperCase();
+    for (var i = 0; i < daftarBarang.length; i++) {
+      if (daftarBarang[i].kode.toUpperCase() === target) return daftarBarang[i];
+    }
+    return null;
+  }
+
+  function cariSuggestion(teks) {
+    var q = String(teks || '').trim().toUpperCase();
+    if (!q) return [];
+    return daftarBarang.filter(function (it) {
+      return it.kode.toUpperCase().indexOf(q) !== -1 || (it.nama || '').toUpperCase().indexOf(q) !== -1;
+    }).slice(0, 8);
+  }
+
+  // ---------- Autocomplete ----------
+
+  elKode.addEventListener('input', function () {
+    var hasil = cariSuggestion(elKode.value);
+    sembunyikanInfoStok();
+    if (hasil.length === 0) { sembunyikanSuggestion(); return; }
+    elSuggestions.innerHTML = '';
+    hasil.forEach(function (it) {
+      var div = document.createElement('div');
+      div.className = 'suggestion-item';
+      div.innerHTML =
+        '<div class="suggestion-kode">' + escapeHtml(it.kode) + '</div>' +
+        '<div class="suggestion-nama">' + escapeHtml(it.nama) + '</div>' +
+        '<div class="suggestion-stok">Stok UTM: ' + it.stok + ' ' + escapeHtml(it.satuan || '') + ' · ' + formatRp(it.hargaJual) + '</div>';
+      div.addEventListener('click', function () {
+        elKode.value = it.kode;
+        sembunyikanSuggestion();
+        tampilkanInfoStok(it);
+      });
+      elSuggestions.appendChild(div);
+    });
+    elSuggestions.style.display = 'block';
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!elSuggestions.contains(e.target) && e.target !== elKode) sembunyikanSuggestion();
+  });
+
+  function sembunyikanSuggestion() { elSuggestions.style.display = 'none'; elSuggestions.innerHTML = ''; }
+
+  function tampilkanInfoStok(item) {
+    var terpakaiDiKeranjang = 0;
+    keranjang.forEach(function (k) { if (k.kode === item.kode) terpakaiDiKeranjang = k.qty; });
+    elInfoStok.innerHTML =
+      '<div class="baris"><span class="label">Nama</span><span class="nilai">' + escapeHtml(item.nama) + '</span></div>' +
+      '<div class="baris"><span class="label">Stok UTM</span><span class="nilai">' + item.stok + ' ' + escapeHtml(item.satuan || '') + '</span></div>' +
+      '<div class="baris"><span class="label">Harga Jual</span><span class="nilai">' + formatRp(item.hargaJual) + '</span></div>' +
+      (terpakaiDiKeranjang ? '<div class="baris"><span class="label">Sudah di keranjang</span><span class="nilai">' + terpakaiDiKeranjang + '</span></div>' : '');
+    elInfoStok.style.display = 'block';
+  }
+  function sembunyikanInfoStok() { elInfoStok.style.display = 'none'; elInfoStok.innerHTML = ''; }
+
+  // ---------- Keranjang ----------
+
+  function qtyDiKeranjang(kode) {
+    for (var i = 0; i < keranjang.length; i++) if (keranjang[i].kode === kode) return keranjang[i].qty;
+    return 0;
+  }
+
+  function tambahKeKeranjang(item, qty, sourceLabel) {
+    qty = Number(qty) || 1;
+    var sudah = qtyDiKeranjang(item.kode);
+    if (sudah + qty > item.stok) {
+      tampilkanStatus('Stok "' + item.nama + '" tidak cukup. Tersedia: ' + item.stok + ', di keranjang: ' + sudah + '.', 'error');
+      return false;
+    }
+    var existing = null;
+    for (var i = 0; i < keranjang.length; i++) if (keranjang[i].kode === item.kode) existing = keranjang[i];
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      keranjang.push({ kode: item.kode, nama: item.nama, satuan: item.satuan, hargaJual: item.hargaJual, stok: item.stok, qty: qty });
+    }
+    renderKeranjang();
+    tampilkanStatus((sourceLabel || 'Ditambahkan') + ': ' + item.nama + ' x' + qty, 'ok');
+    return true;
+  }
+
+  window.tambahManual = function () {
+    var item = cariItemByKode(elKode.value);
+    if (!item) { tampilkanStatus('Barang tidak ditemukan. Pilih dari daftar saran atau cek kode.', 'error'); return; }
+    var qty = Number(elQty.value) || 1;
+    if (tambahKeKeranjang(item, qty, 'Ditambahkan')) {
+      elKode.value = ''; elQty.value = 1; sembunyikanInfoStok(); sembunyikanSuggestion();
+    }
+  };
+
+  window.ubahQtyKeranjang = function (kode, nilai) {
+    var qty = Number(nilai);
+    var baris = null;
+    for (var i = 0; i < keranjang.length; i++) if (keranjang[i].kode === kode) baris = keranjang[i];
+    if (!baris) return;
+    if (!qty || qty <= 0) { window.hapusDariKeranjang(kode); return; }
+    if (qty > baris.stok) {
+      tampilkanStatus('Stok "' + baris.nama + '" hanya ' + baris.stok + '.', 'error');
+      qty = baris.stok;
+    }
+    baris.qty = qty;
+    renderKeranjang();
+  };
+
+  window.hapusDariKeranjang = function (kode) {
+    keranjang = keranjang.filter(function (k) { return k.kode !== kode; });
+    renderKeranjang();
+  };
+
+  function renderKeranjang() {
+    if (keranjang.length === 0) {
+      elKeranjangEmpty.style.display = 'block';
+      elTabelKeranjang.style.display = 'none';
+      elCartTotal.textContent = formatRp(0);
+      elBtnBayar.disabled = true;
+      return;
+    }
+    elKeranjangEmpty.style.display = 'none';
+    elTabelKeranjang.style.display = 'table';
+    elBtnBayar.disabled = false;
+
+    elKeranjangBody.innerHTML = '';
+    var total = 0;
+    keranjang.forEach(function (k) {
+      var subtotal = k.qty * k.hargaJual;
+      total += subtotal;
+      var tr = document.createElement('tr');
+
+      var tdNama = document.createElement('td');
+      tdNama.innerHTML = escapeHtml(k.nama) + '<br><span style="color:var(--ink-dim);font-size:11px;">' + formatRp(k.hargaJual) + '/' + escapeHtml(k.satuan || '') + '</span>';
+      tr.appendChild(tdNama);
+
+      var tdQty = document.createElement('td');
+      var inputQty = document.createElement('input');
+      inputQty.type = 'number'; inputQty.className = 'cart-qty tabular'; inputQty.value = k.qty; inputQty.min = '1';
+      inputQty.addEventListener('change', function () { window.ubahQtyKeranjang(k.kode, inputQty.value); });
+      tdQty.appendChild(inputQty);
+      tr.appendChild(tdQty);
+
+      var tdSubtotal = document.createElement('td');
+      tdSubtotal.className = 'tabular';
+      tdSubtotal.textContent = formatRp(subtotal);
+      tr.appendChild(tdSubtotal);
+
+      var tdHapus = document.createElement('td');
+      var btnHapus = document.createElement('button');
+      btnHapus.type = 'button'; btnHapus.className = 'cart-hapus'; btnHapus.textContent = '✕';
+      btnHapus.addEventListener('click', function () { window.hapusDariKeranjang(k.kode); });
+      tdHapus.appendChild(btnHapus);
+      tr.appendChild(tdHapus);
+
+      elKeranjangBody.appendChild(tr);
+    });
+    elCartTotal.textContent = formatRp(total);
+    hitungKembalian();
+  }
+
+  // ---------- Kamera scan ----------
+
+  function pastikanHtml5Qrcode() {
+    if (!html5QrCode) html5QrCode = new Html5Qrcode('reader');
+    return html5QrCode;
+  }
+
+  function getanBunyi() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator();
+      osc.type = 'sine'; osc.frequency.value = 880;
+      osc.connect(ctx.destination); osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } catch (err) {}
+  }
+
+  function onScanSukses(decodedText) {
+    if (scanTerkunci) return;
+    scanTerkunci = true;
+    setTimeout(function () { scanTerkunci = false; }, 900);
+
+    var kode = decodedText.trim();
+    var item = cariItemByKode(kode);
+    if (item) {
+      tambahKeKeranjang(item, 1, '📦 Scan');
+      if (navigator.vibrate) navigator.vibrate(60);
+      getanBunyi();
+    } else {
+      tampilkanStatus('Kode "' + kode + '" belum ada di Master Barang UTM.', 'error');
+      if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+    }
+  }
+
+  window.mulaiScan = function () {
+    if (kameraAktif) return;
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
+    if (!url || !token) {
+      tampilkanStatus('Isi dulu URL Web App & Token di Pengaturan Koneksi.', 'error');
+      elSettingsBody.classList.add('open'); elSettingsChevron.classList.add('open');
+      return;
+    }
+    var scanner = pastikanHtml5Qrcode();
+    var config = {
+      fps: 10,
+      qrbox: function (vw, vh) { var size = Math.floor(Math.min(vw, vh) * 0.7); return { width: size, height: size }; },
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E, Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39, Html5QrcodeSupportedFormats.CODE_93, Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.ITF
+      ]
+    };
+    scanner.start({ facingMode: 'environment' }, config, onScanSukses, function () {}).then(function () {
+      kameraAktif = true;
+      elBtnStart.style.display = 'none'; elBtnStop.style.display = 'block';
+      elReaderPlaceholder.style.display = 'none';
+    }).catch(function (err) {
+      tampilkanStatus('Tidak bisa membuka kamera: ' + (err && err.message ? err.message : err) + '. Pastikan izin kamera diaktifkan.', 'error');
+    });
+  };
+
+  window.hentikanScan = function () {
+    if (!kameraAktif || !html5QrCode) return;
+    html5QrCode.stop().then(function () {
+      kameraAktif = false;
+      elBtnStart.style.display = 'block'; elBtnStop.style.display = 'none';
+      elReaderPlaceholder.style.display = 'flex';
+    }).catch(function () {});
+  };
+
+  // ---------- Pembayaran ----------
+
+  window.toggleUangDiterima = function () {
+    elCashFields.style.display = (elMetodeBayar.value === 'Cash') ? 'block' : 'none';
+  };
+
+  window.hitungKembalian = function () {
+    var total = keranjang.reduce(function (sum, k) { return sum + k.qty * k.hargaJual; }, 0);
+    var diterima = Number(elUangDiterima.value) || 0;
+    var kembalian = diterima - total;
+    elKembalianHint.textContent = 'Kembalian: ' + formatRp(kembalian < 0 ? 0 : kembalian);
+  };
+
+  window.prosesPembayaran = function () {
+    if (keranjang.length === 0) { tampilkanStatus('Keranjang masih kosong.', 'error'); return; }
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
+    if (!url || !token) { tampilkanStatus('Isi dulu URL Web App & Token di Pengaturan Koneksi.', 'error'); return; }
+
+    var items = keranjang.map(function (k) { return { kode: k.kode, qty: k.qty }; });
+    var pembeli = { nama: elNamaPembeli.value.trim() || 'Umum', noHp: elNoHpPembeli.value.trim() };
+    var metode = elMetodeBayar.value;
+    var uangDiterima = (metode === 'Cash') ? (Number(elUangDiterima.value) || 0) : 0;
+    var catatan = elCatatan.value.trim();
+    var petugas = safeGet(LS_PETUGAS);
+
+    elBtnBayar.disabled = true;
+    elBtnBayar.textContent = 'Memproses...';
+
+    fetch(apiUrl('kasirjual', {
+      items: JSON.stringify(items),
+      pembeli: JSON.stringify(pembeli),
+      metode: metode,
+      uangDiterima: uangDiterima,
+      catatan: catatan,
+      petugas: petugas
+    }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        elBtnBayar.disabled = false;
+        elBtnBayar.textContent = 'Proses Pembayaran';
+        if (res && res.success) {
+          tampilkanReceipt(res);
+          tampilkanStatus('Pembayaran berhasil: ' + res.id, 'ok');
+          keranjang = [];
+          renderKeranjang();
+          elNamaPembeli.value = ''; elNoHpPembeli.value = ''; elCatatan.value = ''; elUangDiterima.value = '';
+          muatDaftarBarang();
+          muatRiwayat();
+        } else {
+          tampilkanStatus((res && res.message) || 'Gagal memproses pembayaran.', 'error');
+        }
+      })
+      .catch(function () {
+        elBtnBayar.disabled = false;
+        elBtnBayar.textContent = 'Proses Pembayaran';
+        tampilkanStatus('Gagal terhubung ke Apps Script saat memproses pembayaran.', 'error');
+      });
+  };
+
+  function tampilkanReceipt(res) {
+    var html = '<div class="receipt"><h3>🧾 ' + escapeHtml(res.id) + '</h3>';
+    (res.rincian || []).forEach(function (baris) {
+      html += '<div class="baris"><span>' + escapeHtml(baris) + '</span></div>';
+    });
+    html += '<div class="baris total"><span>Total</span><span>' + formatRp(res.totalBayar) + '</span></div>';
+    html += '<div class="baris"><span>Diterima</span><span>' + formatRp(res.uangDiterima) + '</span></div>';
+    html += '<div class="baris"><span>Kembalian</span><span>' + formatRp(res.kembalian) + '</span></div>';
+    html += '</div>';
+    elReceiptWrap.innerHTML = html;
+  }
+
+  // ---------- Riwayat ----------
+
+  function muatRiwayat() {
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
+    if (!url || !token) return;
+    fetch(apiUrl('kasirriwayat', { limit: 20 }))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        renderRiwayat(data.riwayat || []);
+      })
+      .catch(function () {});
+  }
+
+  function renderRiwayat(list) {
+    elRiwayatBody.innerHTML = '';
+    if (list.length === 0) { elRiwayatEmpty.style.display = 'block'; return; }
+    elRiwayatEmpty.style.display = 'none';
+
+    list.forEach(function (r) {
+      var tr = document.createElement('tr');
+
+      var tdWaktu = document.createElement('td'); tdWaktu.textContent = r.waktu; tr.appendChild(tdWaktu);
+      var tdId = document.createElement('td'); tdId.className = 'mono'; tdId.textContent = r.id; tr.appendChild(tdId);
+      var tdTotal = document.createElement('td'); tdTotal.className = 'tabular'; tdTotal.textContent = formatRp(r.totalBayar); tr.appendChild(tdTotal);
+      var tdMetode = document.createElement('td'); tdMetode.textContent = r.metodeBayar; tr.appendChild(tdMetode);
+
+      var tdAksi = document.createElement('td');
+      if (r.dibatalkan) {
+        var badge = document.createElement('span'); badge.className = 'dibatalkan-badge'; badge.textContent = 'Dibatalkan';
+        tdAksi.appendChild(badge);
+      } else {
+        var btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'riwayat-item-hapus'; btn.textContent = 'Batalkan';
+        btn.addEventListener('click', function () { batalkanTransaksi(r.id, btn); });
+        tdAksi.appendChild(btn);
+      }
+      tr.appendChild(tdAksi);
+
+      elRiwayatBody.appendChild(tr);
+    });
+  }
+
+  function batalkanTransaksi(id, btn) {
+    if (!confirm('Batalkan transaksi ' + id + '? Stok barang akan dikembalikan ke Master Barang UTM.')) return;
+    btn.disabled = true; btn.textContent = '...';
+    fetch(apiUrl('kasirbatal', { id: id }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (res && res.success) {
+          tampilkanStatus('Transaksi ' + id + ' dibatalkan.', 'ok');
+          muatDaftarBarang();
+          muatRiwayat();
+        } else {
+          tampilkanStatus((res && res.message) || 'Gagal membatalkan transaksi.', 'error');
+          btn.disabled = false; btn.textContent = 'Batalkan';
+        }
+      })
+      .catch(function () {
+        tampilkanStatus('Gagal terhubung ke Apps Script saat membatalkan.', 'error');
+        btn.disabled = false; btn.textContent = 'Batalkan';
+      });
+  }
+
+  // ---------- Init ----------
+
+  muatPengaturanTersimpan();
+  renderKeranjang();
+})();
+</script>
+</body>
+</html>

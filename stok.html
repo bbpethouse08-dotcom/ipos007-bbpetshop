@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stok — B&B Petshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #f5f3ee; --surface: #ffffff; --surface-sunken: #f0eee8;
+    --ink: #201f1a; --ink-dim: #726d60; --line: #e4e0d5;
+    --accent: #2c4bd4; --accent-ink: #ffffff; --accent-soft: #e8ecfc;
+    --ok-ink: #1c6b3c; --ok-bg: #e3f3e6; --err-ink: #af2a1e; --err-bg: #fbe8e4;
+    --focus-ring: #2c4bd4;
+    --shadow: 0 1px 2px rgba(32,31,26,.04), 0 6px 20px rgba(32,31,26,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14140f; --surface: #1d1c17; --surface-sunken: #201f19;
+      --ink: #f1efe6; --ink-dim: #9a9587; --line: #34322a;
+      --accent: #7d93f0; --accent-ink: #12142a; --accent-soft: #232a4a;
+      --ok-ink: #7fd39a; --ok-bg: #17301f; --err-ink: #f0958a; --err-bg: #3a1f1b;
+      --focus-ring: #7d93f0; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px; line-height: 1.45; padding: 16px 14px 64px;
+    max-width: 560px; margin-left: auto; margin-right: auto;
+  }
+  .kode-mono, input#webUrl, input#token, .suggestion-kode, td.mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  header.app-header {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line);
+  }
+  header.app-header h1 { font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .item-pill {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; font-weight: 600; color: var(--ink-dim);
+    background: var(--surface-sunken); border: 1px solid var(--line); border-radius: 999px;
+    padding: 3px 10px; white-space: nowrap;
+  }
+
+  nav.tabbar { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+  nav.tabbar a {
+    flex: none; padding: 9px 14px; font-size: 13.5px; font-weight: 600; color: var(--ink-dim);
+    text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  nav.tabbar a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section.card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-dim); margin: 0 0 12px; }
+
+  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-dim); margin: 12px 0 5px; }
+  label:first-of-type { margin-top: 0; }
+  input, select {
+    width: 100%; padding: 11px 12px; font-size: 15px; font-family: inherit;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--surface-sunken); color: var(--ink);
+  }
+  input::placeholder { color: var(--ink-dim); opacity: .8; }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+
+  button { font-family: inherit; font-size: 14.5px; font-weight: 600; padding: 12px; border: none; border-radius: 9px; cursor: pointer; width: 100%; transition: transform .06s ease, opacity .15s ease; }
+  button:active { transform: scale(.985); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); margin-top: 14px; }
+  .btn-ghost { background: transparent; color: var(--ink-dim); border: 1px solid var(--line); font-weight: 500; padding: 10px; width: auto; }
+
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .toggle-row .card-label { margin: 0; }
+  .chevron { color: var(--ink-dim); font-size: 11px; transition: transform .15s ease; }
+  .chevron.open { transform: rotate(90deg); }
+  .settings-body { display: none; margin-top: 4px; }
+  .settings-body.open { display: block; }
+  .hint { font-size: 11.5px; color: var(--ink-dim); margin-top: 8px; line-height: 1.5; }
+
+  .mode-row, .lokasi-row { display: flex; gap: 8px; }
+  .mode-btn, .lokasi-btn {
+    flex: 1; padding: 12px 8px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--surface-sunken); color: var(--ink); font-weight: 600; font-size: 13.5px; cursor: pointer; text-align: center;
+  }
+  .mode-btn.aktif, .lokasi-btn.aktif { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  .reader-frame { position: relative; border-radius: 11px; overflow: hidden; background: #0a0a08; min-height: 200px; }
+  #reader { width: 100%; }
+  #reader video { display: block; width: 100%; border-radius: 11px; }
+  .reader-frame::before { content: ""; position: absolute; inset: 14%; border-radius: 10px; border: 2px solid rgba(255,255,255,.55); pointer-events: none; z-index: 2; }
+  .reader-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(241,239,230,.5); font-size: 13px; z-index: 1; }
+
+  .scan-controls { display: flex; gap: 8px; margin-top: 12px; }
+  .scan-controls button { margin-top: 0; }
+  .scan-controls .btn-primary { flex: 2; }
+  .scan-controls .btn-ghost { flex: 1; }
+
+  .autocomplete-wrap { position: relative; }
+  #suggestions {
+    position: absolute; left: 0; right: 0; top: 100%; background: var(--surface);
+    border: 1px solid var(--line); border-top: none; border-radius: 0 0 9px 9px;
+    max-height: 230px; overflow-y: auto; z-index: 50; display: none; box-shadow: var(--shadow);
+  }
+  .suggestion-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--line); }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover, .suggestion-item.active { background: var(--accent-soft); }
+  .suggestion-kode { font-weight: 600; font-size: 13px; }
+  .suggestion-nama { font-size: 12px; color: var(--ink-dim); margin-top: 1px; }
+
+  .qty-row { display: flex; gap: 8px; }
+
+  #status { margin-top: 12px; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; display: none; font-weight: 600; border: 1px solid transparent; }
+  .ok { background: var(--ok-bg); color: var(--ok-ink); display: block !important; }
+  .error { background: var(--err-bg); color: var(--err-ink); display: block !important; }
+  .pending { background: var(--accent-soft); color: var(--accent); display: block !important; }
+
+  .info-stok { margin-top: 10px; padding: 10px 12px; border-radius: 9px; background: var(--accent-soft); font-size: 12.5px; display: none; }
+  .info-stok .baris { display: flex; justify-content: space-between; padding: 2px 0; }
+  .info-stok .label { color: var(--ink-dim); }
+  .info-stok .nilai { font-weight: 600; font-family: "IBM Plex Mono", monospace; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td, th { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+  th { color: var(--ink-dim); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; }
+  tr:last-child td { border-bottom: none; }
+  .qty-pill { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-ink); }
+  .empty-hint { color: var(--ink-dim); font-size: 13px; text-align: center; padding: 14px 0; }
+  .riwayat-item-hapus { background: none; border: none; color: var(--err-ink); font-size: 12px; cursor: pointer; text-decoration: underline; padding: 2px 4px; width: auto; }
+  .riwayat-scroll { overflow-x: auto; }
+  table.riwayat { min-width: 380px; }
+
+  .footer-note { text-align: center; font-size: 11px; color: var(--ink-dim); margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>📦 Stok</h1>
+  <span class="item-pill tabular" id="itemCountLabel">memuat…</span>
+</header>
+
+<nav class="tabbar">
+  <a href="index.html">🏠 Menu</a>
+  <a href="kasir.html">💰 Kasir</a>
+  <a href="stok.html" class="active">📦 Stok</a>
+  <a href="laporan.html">📊 Laporan</a>
+</nav>
+
+<section class="card">
+  <div class="toggle-row" id="settingsToggle">
+    <p class="card-label">Pengaturan Koneksi</p>
+    <span class="chevron" id="settingsChevron">▶</span>
+  </div>
+  <div class="settings-body" id="settingsBody">
+    <label for="webUrl">URL Web App Apps Script</label>
+    <input type="text" id="webUrl" class="kode-mono" placeholder="https://script.google.com/macros/s/xxx/exec">
+    <label for="token">Token Rahasia</label>
+    <input type="text" id="token" class="kode-mono" placeholder="Token dari SCAN_TOKEN di Code.gs">
+    <label for="petugas">Nama Petugas</label>
+    <input type="text" id="petugas" placeholder="mis. Ketut">
+    <button type="button" class="btn-primary" onclick="simpanPengaturan()">Simpan &amp; Muat Data</button>
+    <p class="hint">Pengaturan sama dipakai di semua halaman (Menu, Kasir, Stok, Laporan).</p>
+  </div>
+</section>
+
+<section class="card">
+  <p class="card-label">Mode Kerja</p>
+  <div class="mode-row">
+    <button type="button" class="mode-btn aktif" id="btnModeOpname" onclick="pilihMode('opname')">📷 Scan Opname</button>
+    <button type="button" class="mode-btn" id="btnModeTransfer" onclick="pilihMode('transfer')">🔄 Transfer Stok</button>
+  </div>
+  <p class="hint" id="modeHint">Scan barang untuk mencatat hasil hitung fisik ke Stok Opname.</p>
+</section>
+
+<section class="card" id="cardLokasiOpname">
+  <p class="card-label">Lokasi Scan</p>
+  <div class="lokasi-row" id="lokasiRow">
+    <button type="button" class="lokasi-btn aktif" data-val="UTM" onclick="pilihLokasi('UTM')">🏪 UTM (Display)</button>
+    <button type="button" class="lokasi-btn" data-val="GDG" onclick="pilihLokasi('GDG')">📦 GDG (Gudang)</button>
+  </div>
+  <p class="hint">Hasil scan berikutnya masuk ke Stok Fisik lokasi ini.</p>
+</section>
+
+<section class="card" id="cardArahTransfer" style="display:none;">
+  <p class="card-label">Arah Transfer</p>
+  <div class="lokasi-row" id="arahRow">
+    <button type="button" class="lokasi-btn aktif" data-val="GDG_KE_UTM" onclick="pilihArah('GDG_KE_UTM')">📦→🏪 Gudang ke UTM</button>
+    <button type="button" class="lokasi-btn" data-val="UTM_KE_GDG" onclick="pilihArah('UTM_KE_GDG')">🏪→📦 UTM ke Gudang</button>
+  </div>
+  <p class="hint">Stok akan dipindahkan sesuai arah ini setiap scan/tambah.</p>
+</section>
+
+<section class="card">
+  <p class="card-label">Kamera</p>
+  <div class="reader-frame">
+    <div id="reader"></div>
+    <div class="reader-placeholder" id="readerPlaceholder">Tekan "Mulai Scan" untuk membuka kamera</div>
+  </div>
+  <div class="scan-controls">
+    <button type="button" class="btn-primary" id="btnStart" onclick="mulaiScan()">▶ Mulai Scan</button>
+    <button type="button" class="btn-ghost" id="btnStop" onclick="hentikanScan()" style="display:none;">Stop</button>
+  </div>
+</section>
+
+<section class="card">
+  <p class="card-label">Kode / Nama Item</p>
+  <div class="autocomplete-wrap">
+    <input type="text" id="kode" placeholder="Hasil scan muncul di sini, atau ketik manual" autocomplete="off">
+    <div id="suggestions"></div>
+  </div>
+  <div class="info-stok" id="infoStok"></div>
+  <div class="qty-row">
+    <div style="flex:1;">
+      <label for="qty">Qty</label>
+      <input type="number" id="qty" class="tabular" value="1" min="1">
+    </div>
+  </div>
+  <button type="button" class="btn-primary" id="btnAksi" onclick="prosesAksi()">✓ Tambahkan ke Stok Fisik</button>
+  <div id="status" role="status"></div>
+</section>
+
+<section class="card">
+  <p class="card-label" id="riwayatLabel">Riwayat Scan</p>
+  <div class="riwayat-scroll">
+    <table class="riwayat" id="tabelRiwayat">
+      <thead id="riwayatHead"><tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Lok</th><th></th></tr></thead>
+      <tbody id="riwayatBody"></tbody>
+    </table>
+  </div>
+  <p class="empty-hint" id="riwayatEmpty">Belum ada data.</p>
+</section>
+
+<section class="card">
+  <p class="card-label">Admin Stok Opname</p>
+  <button type="button" class="btn-ghost" style="width:100%; margin-bottom:8px;" onclick="generateOpname()">🔄 Generate / Refresh Sheet Stok Opname</button>
+  <button type="button" class="btn-ghost" style="width:100%;" onclick="hitungUlang()">🧮 Hitung Ulang Semua Selisih</button>
+  <p class="hint">Generate dipakai sekali di awal sesi opname baru (menggabungkan Master Barang UTM + GDG). Hitung Ulang dipakai kalau ada yang diedit manual langsung di sheet.</p>
+</section>
+
+<p class="footer-note">Data tersimpan langsung ke Google Sheet B&amp;B Petshop.</p>
+
+<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var LS_URL = 'bb_staff_web_url';
+  var LS_TOKEN = 'bb_staff_token';
+  var LS_PETUGAS = 'bb_staff_petugas';
+  var LS_LOKASI = 'bb_stok_lokasi';
+  var LS_ARAH = 'bb_stok_arah';
+
+  var elSettingsToggle = document.getElementById('settingsToggle');
+  var elSettingsBody = document.getElementById('settingsBody');
+  var elSettingsChevron = document.getElementById('settingsChevron');
+  var elWebUrl = document.getElementById('webUrl');
+  var elToken = document.getElementById('token');
+  var elPetugas = document.getElementById('petugas');
+  var elItemCountLabel = document.getElementById('itemCountLabel');
+
+  var elBtnModeOpname = document.getElementById('btnModeOpname');
+  var elBtnModeTransfer = document.getElementById('btnModeTransfer');
+  var elModeHint = document.getElementById('modeHint');
+  var elCardLokasiOpname = document.getElementById('cardLokasiOpname');
+  var elCardArahTransfer = document.getElementById('cardArahTransfer');
+  var elLokasiRow = document.getElementById('lokasiRow');
+  var elArahRow = document.getElementById('arahRow');
+
+  var elKode = document.getElementById('kode');
+  var elQty = document.getElementById('qty');
+  var elSuggestions = document.getElementById('suggestions');
+  var elInfoStok = document.getElementById('infoStok');
+  var elStatus = document.getElementById('status');
+  var elBtnAksi = document.getElementById('btnAksi');
+
+  var elBtnStart = document.getElementById('btnStart');
+  var elBtnStop = document.getElementById('btnStop');
+  var elReaderPlaceholder = document.getElementById('readerPlaceholder');
+
+  var elRiwayatLabel = document.getElementById('riwayatLabel');
+  var elRiwayatHead = document.getElementById('riwayatHead');
+  var elRiwayatBody = document.getElementById('riwayatBody');
+  var elRiwayatEmpty = document.getElementById('riwayatEmpty');
+
+  var mode = 'opname'; // 'opname' | 'transfer'
+  var lokasiAktif = 'UTM';
+  var arahAktif = 'GDG_KE_UTM';
+  var daftarBarang = []; // kode, nama, satuan, + (opname: stokFisikUtm/Gdg) atau (transfer: stokUtm/Gdg)
+  var html5QrCode = null;
+  var kameraAktif = false;
+  var scanTerkunci = false;
+
+  function safeGet(key) { try { return localStorage.getItem(key) || ''; } catch (err) { return ''; } }
+  function safeSet(key, val) { try { localStorage.setItem(key, val); } catch (err) {} }
+  function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function tampilkanStatus(pesan, tipe) { elStatus.className = tipe; elStatus.textContent = pesan; }
+
+  // ---------- Pengaturan ----------
+
+  elSettingsToggle.addEventListener('click', function () {
+    var buka = !elSettingsBody.classList.contains('open');
+    elSettingsBody.classList.toggle('open', buka);
+    elSettingsChevron.classList.toggle('open', buka);
+  });
+
+  function muatPengaturanTersimpan() {
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN), petugas = safeGet(LS_PETUGAS);
+    elWebUrl.value = url; elToken.value = token; elPetugas.value = petugas;
+    pilihLokasi(safeGet(LS_LOKASI) || 'UTM');
+    pilihArah(safeGet(LS_ARAH) || 'GDG_KE_UTM');
+
+    if (!url || !token) {
+      elSettingsBody.classList.add('open'); elSettingsChevron.classList.add('open');
+    } else {
+      muatDaftarBarang();
+      muatRiwayat();
+    }
+  }
+
+  window.simpanPengaturan = function () {
+    var url = elWebUrl.value.trim().replace(/\/+$/, '');
+    var token = elToken.value.trim();
+    var petugas = elPetugas.value.trim();
+    if (!url || !token) { tampilkanStatus('URL Web App dan Token wajib diisi.', 'error'); return; }
+    safeSet(LS_URL, url); safeSet(LS_TOKEN, token); safeSet(LS_PETUGAS, petugas);
+    elSettingsBody.classList.remove('open'); elSettingsChevron.classList.remove('open');
+    muatDaftarBarang();
+    muatRiwayat();
+  };
+
+  function apiUrl(action, extraParams) {
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
+    var qs = 'api=' + encodeURIComponent(action) + '&token=' + encodeURIComponent(token);
+    if (extraParams) Object.keys(extraParams).forEach(function (k) { qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(extraParams[k]); });
+    return url + '?' + qs;
+  }
+
+  // ---------- Mode ----------
+
+  window.pilihMode = function (m) {
+    mode = m;
+    elBtnModeOpname.classList.toggle('aktif', m === 'opname');
+    elBtnModeTransfer.classList.toggle('aktif', m === 'transfer');
+    elCardLokasiOpname.style.display = (m === 'opname') ? 'block' : 'none';
+    elCardArahTransfer.style.display = (m === 'transfer') ? 'block' : 'none';
+    elModeHint.textContent = (m === 'opname')
+      ? 'Scan barang untuk mencatat hasil hitung fisik ke Stok Opname.'
+      : 'Scan barang untuk memindahkan stok antar lokasi (tidak mengubah total stok, cuma pindah tempat).';
+    elBtnAksi.textContent = (m === 'opname') ? '✓ Tambahkan ke Stok Fisik' : '🔄 Proses Transfer';
+    elRiwayatLabel.textContent = (m === 'opname') ? 'Riwayat Scan' : 'Riwayat Transfer';
+    elRiwayatHead.innerHTML = (m === 'opname')
+      ? '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Lok</th><th></th></tr>'
+      : '<tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Qty</th><th>Arah</th><th></th></tr>';
+    sembunyikanInfoStok();
+    elKode.value = '';
+    muatDaftarBarang();
+    muatRiwayat();
+  };
+
+  window.pilihLokasi = function (lok) {
+    lokasiAktif = lok; safeSet(LS_LOKASI, lok);
+    elLokasiRow.querySelectorAll('.lokasi-btn').forEach(function (btn) { btn.classList.toggle('aktif', btn.getAttribute('data-val') === lok); });
+  };
+
+  window.pilihArah = function (arah) {
+    arahAktif = arah; safeSet(LS_ARAH, arah);
+    elArahRow.querySelectorAll('.lokasi-btn').forEach(function (btn) { btn.classList.toggle('aktif', btn.getAttribute('data-val') === arah); });
+  };
+
+  // ---------- Daftar barang (untuk autocomplete & info) ----------
+
+  function muatDaftarBarang() {
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
+    if (!url || !token) return;
+    elItemCountLabel.textContent = '(memuat...)';
+
+    var action = (mode === 'opname') ? 'list' : 'listmaster';
+    fetch(apiUrl(action))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data || data.success !== true) {
+          elItemCountLabel.textContent = '';
+          tampilkanStatus((data && data.message) || 'Gagal memuat daftar barang. Cek URL/Token.', 'error');
+          return;
+        }
+        daftarBarang = data.items || [];
+        elItemCountLabel.textContent = daftarBarang.length + ' barang';
+      })
+      .catch(function () {
+        elItemCountLabel.textContent = '';
+        tampilkanStatus('Gagal terhubung ke Apps Script. Cek URL/Token & koneksi internet.', 'error');
+      });
+  }
+
+  function cariItemByKode(kode) {
+    var target = String(kode || '').trim().toUpperCase();
+    for (var i = 0; i < daftarBarang.length; i++) if (daftarBarang[i].kode.toUpperCase() === target) return daftarBarang[i];
+    return null;
+  }
+
+  // ---------- Autocomplete ----------
+
+  elKode.addEventListener('input', function () {
+    var q = elKode.value.trim().toUpperCase();
+    sembunyikanInfoStok();
+    if (!q) { sembunyikanSuggestion(); return; }
+    var hasil = daftarBarang.filter(function (it) {
+      return it.kode.toUpperCase().indexOf(q) !== -1 || (it.nama || '').toUpperCase().indexOf(q) !== -1;
+    }).slice(0, 8);
+    if (hasil.length === 0) { sembunyikanSuggestion(); return; }
+    elSuggestions.innerHTML = '';
+    hasil.forEach(function (it) {
+      var div = document.createElement('div');
+      div.className = 'suggestion-item';
+      div.innerHTML = '<div class="suggestion-kode">' + escapeHtml(it.kode) + '</div><div class="suggestion-nama">' + escapeHtml(it.nama) + '</div>';
+      div.addEventListener('click', function () { elKode.value = it.kode; sembunyikanSuggestion(); muatInfoStok(it.kode); });
+      elSuggestions.appendChild(div);
+    });
+    elSuggestions.style.display = 'block';
+  });
+
+  document.addEventListener('click', function (e) { if (!elSuggestions.contains(e.target) && e.target !== elKode) sembunyikanSuggestion(); });
+  function sembunyikanSuggestion() { elSuggestions.style.display = 'none'; elSuggestions.innerHTML = ''; }
+
+  function muatInfoStok(kode) {
+    var item = cariItemByKode(kode);
+    if (!item) { sembunyikanInfoStok(); return; }
+    if (mode === 'opname') {
+      elInfoStok.innerHTML =
+        '<div class="baris"><span class="label">Nama</span><span class="nilai">' + escapeHtml(item.nama) + '</span></div>' +
+        '<div class="baris"><span class="label">Stok Fisik UTM</span><span class="nilai">' + item.stokFisikUtm + '</span></div>' +
+        '<div class="baris"><span class="label">Stok Fisik GDG</span><span class="nilai">' + item.stokFisikGdg + '</span></div>';
+    } else {
+      elInfoStok.innerHTML =
+        '<div class="baris"><span class="label">Nama</span><span class="nilai">' + escapeHtml(item.nama) + '</span></div>' +
+        '<div class="baris"><span class="label">Stok UTM</span><span class="nilai">' + item.stokUtm + '</span></div>' +
+        '<div class="baris"><span class="label">Stok GDG</span><span class="nilai">' + item.stokGdg + '</span></div>';
+    }
+    elInfoStok.style.display = 'block';
+  }
+  function sembunyikanInfoStok() { elInfoStok.style.display = 'none'; elInfoStok.innerHTML = ''; }
+
+  // ---------- Kamera ----------
+
+  function pastikanHtml5Qrcode() { if (!html5QrCode) html5QrCode = new Html5Qrcode('reader'); return html5QrCode; }
+
+  function getanBunyi() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator();
+      osc.type = 'sine'; osc.frequency.value = 880;
+      osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.1);
+    } catch (err) {}
+  }
+
+  function onScanSukses(decodedText) {
+    if (scanTerkunci) return;
+    scanTerkunci = true;
+    var kode = decodedText.trim();
+    elKode.value = kode;
+    sembunyikanSuggestion();
+    muatInfoStok(kode);
+    var item = cariItemByKode(kode);
+    if (item) {
+      tampilkanStatus('📦 Terbaca: ' + item.nama + ' (' + kode + '). Cek qty di bawah lalu tap tombol untuk proses.', 'pending');
+      if (navigator.vibrate) navigator.vibrate(60);
+      getanBunyi();
+    } else {
+      tampilkanStatus('Kode "' + kode + '" belum ada di daftar. Cek lagi atau ganti Mode Kerja kalau salah daftar.', 'error');
+      if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+    }
+    setTimeout(function () { scanTerkunci = false; }, 1200);
+  }
+
+  window.mulaiScan = function () {
+    if (kameraAktif) return;
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
+    if (!url || !token) {
+      tampilkanStatus('Isi dulu URL Web App & Token di Pengaturan Koneksi.', 'error');
+      elSettingsBody.classList.add('open'); elSettingsChevron.classList.add('open');
+      return;
+    }
+    var scanner = pastikanHtml5Qrcode();
+    var config = {
+      fps: 10,
+      qrbox: function (vw, vh) { var size = Math.floor(Math.min(vw, vh) * 0.7); return { width: size, height: size }; },
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E, Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39, Html5QrcodeSupportedFormats.CODE_93, Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.ITF
+      ]
+    };
+    scanner.start({ facingMode: 'environment' }, config, onScanSukses, function () {}).then(function () {
+      kameraAktif = true;
+      elBtnStart.style.display = 'none'; elBtnStop.style.display = 'block'; elReaderPlaceholder.style.display = 'none';
+    }).catch(function (err) {
+      tampilkanStatus('Tidak bisa membuka kamera: ' + (err && err.message ? err.message : err) + '. Pastikan izin kamera diaktifkan.', 'error');
+    });
+  };
+
+  window.hentikanScan = function () {
+    if (!kameraAktif || !html5QrCode) return;
+    html5QrCode.stop().then(function () {
+      kameraAktif = false;
+      elBtnStart.style.display = 'block'; elBtnStop.style.display = 'none'; elReaderPlaceholder.style.display = 'flex';
+    }).catch(function () {});
+  };
+
+  // ---------- Proses aksi (Opname atau Transfer) ----------
+
+  window.prosesAksi = function () {
+    var kode = elKode.value.trim();
+    var qty = Number(elQty.value) || 1;
+    if (!kode) { tampilkanStatus('Kode item kosong.', 'error'); return; }
+    var petugas = safeGet(LS_PETUGAS);
+
+    var promise;
+    if (mode === 'opname') {
+      promise = fetch(apiUrl('scan', { kode: kode, qty: qty, petugas: petugas, lokasi: lokasiAktif }));
+    } else {
+      promise = fetch(apiUrl('transfer', { kode: kode, qty: qty, petugas: petugas, arah: arahAktif }));
+    }
+
+    promise.then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (res && res.success) {
+          if (mode === 'opname') {
+            tampilkanStatus(res.nama + ' [' + res.lokasi + '] -> Fisik Total: ' + res.stokFisikTotal, 'ok');
+          } else {
+            tampilkanStatus(res.nama + ' [' + res.label + '] -> Stok asal: ' + res.stokAsalBaru + ', tujuan: ' + res.stokTujuanBaru, 'ok');
+          }
+          elKode.value = ''; elQty.value = 1;
+          sembunyikanInfoStok();
+          muatDaftarBarang();
+          muatRiwayat();
+        } else {
+          tampilkanStatus((res && res.message) || 'Gagal memproses.', 'error');
+        }
+      })
+      .catch(function () { tampilkanStatus('Gagal terhubung ke Apps Script.', 'error'); });
+  };
+
+  // ---------- Riwayat ----------
+
+  function muatRiwayat() {
+    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
+    if (!url || !token) return;
+    var action = (mode === 'opname') ? 'history' : 'riwayattransfer';
+    fetch(apiUrl(action, { limit: 30 }))
+      .then(function (res) { return res.json(); })
+      .then(function (data) { if (data && data.success) renderRiwayat(data.riwayat || []); })
+      .catch(function () {});
+  }
+
+  function renderRiwayat(list) {
+    elRiwayatBody.innerHTML = '';
+    if (list.length === 0) { elRiwayatEmpty.style.display = 'block'; return; }
+    elRiwayatEmpty.style.display = 'none';
+
+    list.forEach(function (r) {
+      var tr = document.createElement('tr');
+      var tdWaktu = document.createElement('td'); tdWaktu.textContent = r.waktu; tr.appendChild(tdWaktu);
+      var tdKode = document.createElement('td'); tdKode.className = 'mono'; tdKode.textContent = r.kode; tr.appendChild(tdKode);
+      var tdNama = document.createElement('td'); tdNama.textContent = r.nama; tr.appendChild(tdNama);
+      var tdQty = document.createElement('td');
+      var pill = document.createElement('span'); pill.className = 'qty-pill'; pill.textContent = '+' + r.qty;
+      tdQty.appendChild(pill); tr.appendChild(tdQty);
+      var tdKet = document.createElement('td'); tdKet.textContent = (mode === 'opname') ? r.lokasi : r.label; tr.appendChild(tdKet);
+      var tdAksi = document.createElement('td');
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'riwayat-item-hapus'; btn.textContent = (mode === 'opname') ? 'Hapus' : 'Batalkan';
+      btn.addEventListener('click', function () { batalkanRiwayat(r.id, btn); });
+      tdAksi.appendChild(btn); tr.appendChild(tdAksi);
+      elRiwayatBody.appendChild(tr);
+    });
+  }
+
+  function batalkanRiwayat(id, btn) {
+    var konfirmasi = (mode === 'opname')
+      ? 'Hapus scan ini? Stok fisik terkait akan otomatis dikurangi kembali.'
+      : 'Batalkan transfer ini? Stok di kedua lokasi akan dikembalikan.';
+    if (!confirm(konfirmasi)) return;
+    btn.disabled = true; btn.textContent = '...';
+    var action = (mode === 'opname') ? 'delete' : 'deletetransfer';
+    fetch(apiUrl(action, { id: id }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (res && res.success) {
+          tampilkanStatus('Berhasil dibatalkan/dihapus.', 'ok');
+          muatDaftarBarang();
+          muatRiwayat();
+        } else {
+          tampilkanStatus((res && res.message) || 'Gagal memproses.', 'error');
+          btn.disabled = false; btn.textContent = (mode === 'opname') ? 'Hapus' : 'Batalkan';
+        }
+      })
+      .catch(function () {
+        tampilkanStatus('Gagal terhubung ke Apps Script.', 'error');
+        btn.disabled = false; btn.textContent = (mode === 'opname') ? 'Hapus' : 'Batalkan';
+      });
+  }
+
+  // ---------- Admin ----------
+
+  window.generateOpname = function () {
+    if (!confirm('Generate ulang Stok Opname? Ini menggabungkan Master Barang UTM + GDG lagi. Data hitungan fisik yang belum di-Update Stok ke Master akan HILANG kalau di-generate ulang.')) return;
+    fetch(apiUrl('generateopname'))
+      .then(function (res) { return res.json(); })
+      .then(function (res) { tampilkanStatus((res && res.message) || 'Selesai.', res && res.success ? 'ok' : 'error'); if (res && res.success) { muatDaftarBarang(); muatRiwayat(); } })
+      .catch(function () { tampilkanStatus('Gagal terhubung ke Apps Script.', 'error'); });
+  };
+
+  window.hitungUlang = function () {
+    fetch(apiUrl('hitungulang'))
+      .then(function (res) { return res.json(); })
+      .then(function (res) { tampilkanStatus((res && res.message) || 'Selesai.', res && res.success ? 'ok' : 'error'); })
+      .catch(function () { tampilkanStatus('Gagal terhubung ke Apps Script.', 'error'); });
+  };
+
+  // ---------- Init ----------
+
+  muatPengaturanTersimpan();
+})();
+</script>
+</body>
+</html>
