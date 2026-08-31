@@ -133,6 +133,7 @@
 
   <label for="gJenisHewan">Jenis Hewan</label>
   <select id="gJenisHewan" onchange="onJenisHewanGroomingBerubah()">
+    <option value="" disabled selected>-- Pilih Jenis Hewan --</option>
     <option value="Kucing">Kucing</option>
     <option value="Anjing">Anjing</option>
   </select>
@@ -140,6 +141,7 @@
   <div id="gUkuranWrap" style="display:none;">
     <label for="gUkuran">Ukuran</label>
     <select id="gUkuran" onchange="hitungHargaGrooming()">
+      <option value="" disabled selected>-- Pilih Ukuran --</option>
       <option value="Kecil">Kecil</option>
       <option value="Medium">Medium</option>
       <option value="Besar">Besar</option>
@@ -149,6 +151,7 @@
   <p class="card-label" style="margin-top:20px;">Layanan</p>
   <label for="gJenisGrooming">Jenis Grooming</label>
   <select id="gJenisGrooming" onchange="hitungHargaGrooming()">
+    <option value="" disabled selected>-- Pilih Jenis Grooming --</option>
     <option value="Grooming Basic">Grooming Basic</option>
     <option value="Grooming Medicated">Grooming Medicated</option>
     <option value="Grooming Komplit">Grooming Komplit</option>
@@ -197,6 +200,7 @@
 
   <label for="pJenisHewan">Jenis Hewan</label>
   <select id="pJenisHewan" onchange="onJenisHewanPenitipanBerubah()">
+    <option value="" disabled selected>-- Pilih Jenis Hewan --</option>
     <option value="Kucing">Kucing</option>
     <option value="Anjing">Anjing</option>
   </select>
@@ -204,6 +208,7 @@
   <div id="pUkuranWrap" style="display:none;">
     <label for="pUkuran">Ukuran</label>
     <select id="pUkuran" onchange="hitungHargaPenitipan()">
+      <option value="" disabled selected>-- Pilih Ukuran --</option>
       <option value="Kecil">Kecil</option>
       <option value="Medium">Medium</option>
       <option value="Besar">Besar</option>
@@ -213,6 +218,7 @@
   <p class="card-label" style="margin-top:20px;">Paket &amp; Jadwal</p>
   <label for="pPaket">Paket Penitipan</label>
   <select id="pPaket" onchange="hitungHargaPenitipan()">
+    <option value="" disabled selected>-- Pilih Paket --</option>
     <option value="Pet Hotel + Pakan">Pet Hotel + Pakan</option>
     <option value="Pet Hotel Non Pakan">Pet Hotel Non Pakan</option>
   </select>
@@ -252,8 +258,8 @@
   //  (BOOKING_TOKEN harus SAMA PERSIS dengan yang ada di
   //  Code.gs, dan HARUS BEDA dari SCAN_TOKEN staf).
   // =======================================================
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwoYpSRyLvpiMEVZP3qlSBHevPqdRlIZQi5xRlSNTey0rkJxThu8chW4SIcZ9cpMhM/exec';
-  var BOOKING_TOKEN = 'cust123';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
+  var BOOKING_TOKEN = 'GANTI_DENGAN_BOOKING_TOKEN_ANDA';
 
   var elBtnTabGrooming = document.getElementById('btnTabGrooming');
   var elBtnTabPenitipan = document.getElementById('btnTabPenitipan');
@@ -307,10 +313,15 @@
     var jenisHewan = document.getElementById('gJenisHewan').value;
     var jenisGrooming = document.getElementById('gJenisGrooming').value;
     var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('gUkuran').value : '';
+    var elHarga = document.getElementById('gHargaEstimasi');
+    if (!jenisHewan || !jenisGrooming || (jenisHewan === 'Anjing' && !ukuran)) {
+      elHarga.textContent = '—';
+      return;
+    }
     var found = daftarHargaGrooming.find(function (h) {
       return h.jenisHewan === jenisHewan && h.jenisGrooming === jenisGrooming && (h.ukuran || '') === ukuran;
     });
-    document.getElementById('gHargaEstimasi').textContent = formatRp(found ? found.harga : 0);
+    elHarga.textContent = formatRp(found ? found.harga : 0);
   };
 
   var timerCariPelangganG = null;
@@ -346,15 +357,19 @@
     var namaHewan = document.getElementById('gNamaHewan').value.trim();
     var tanggal = document.getElementById('gTanggal').value;
 
+    var jenisHewan = document.getElementById('gJenisHewan').value;
+    var jenisGrooming = document.getElementById('gJenisGrooming').value;
+    var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('gUkuran').value : '';
+
     if (!noHp) { elStatus.className = 'error'; elStatus.textContent = 'No HP wajib diisi.'; return; }
     if (!namaHewan) { elStatus.className = 'error'; elStatus.textContent = 'Nama hewan wajib diisi.'; return; }
+    if (!jenisHewan) { elStatus.className = 'error'; elStatus.textContent = 'Pilih jenis hewan dulu.'; return; }
+    if (!jenisGrooming) { elStatus.className = 'error'; elStatus.textContent = 'Pilih jenis grooming dulu.'; return; }
+    if (jenisHewan === 'Anjing' && !ukuran) { elStatus.className = 'error'; elStatus.textContent = 'Pilih ukuran hewan dulu.'; return; }
     if (!tanggal) { elStatus.className = 'error'; elStatus.textContent = 'Tanggal booking wajib diisi.'; return; }
 
     var addOn = Array.prototype.slice.call(document.querySelectorAll('#formGrooming .checkbox-grid input:checked'))
       .map(function (cb) { return cb.value; }).join(', ');
-
-    var jenisHewan = document.getElementById('gJenisHewan').value;
-    var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('gUkuran').value : '';
 
     elBtn.disabled = true; elBtn.textContent = 'Mengirim...';
 
@@ -407,10 +422,15 @@
     var jenisHewan = document.getElementById('pJenisHewan').value;
     var paket = document.getElementById('pPaket').value;
     var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('pUkuran').value : '';
+    var elHarga = document.getElementById('pHargaEstimasi');
+    if (!jenisHewan || !paket || (jenisHewan === 'Anjing' && !ukuran)) {
+      elHarga.textContent = '—';
+      return;
+    }
     var found = daftarHargaPenitipan.find(function (h) {
       return h.jenisHewan === jenisHewan && h.paketPenitipan === paket && (h.ukuran || '') === ukuran;
     });
-    document.getElementById('pHargaEstimasi').textContent = formatRp(found ? found.harga : 0);
+    elHarga.textContent = formatRp(found ? found.harga : 0);
   };
 
   var timerCariPelangganP = null;
@@ -430,12 +450,16 @@
     var namaHewan = document.getElementById('pNamaHewan').value.trim();
     var tanggalTitip = document.getElementById('pTanggalTitip').value;
 
+    var jenisHewan = document.getElementById('pJenisHewan').value;
+    var paket = document.getElementById('pPaket').value;
+    var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('pUkuran').value : '';
+
     if (!noHp) { elStatus.className = 'error'; elStatus.textContent = 'No HP wajib diisi.'; return; }
     if (!namaHewan) { elStatus.className = 'error'; elStatus.textContent = 'Nama hewan wajib diisi.'; return; }
+    if (!jenisHewan) { elStatus.className = 'error'; elStatus.textContent = 'Pilih jenis hewan dulu.'; return; }
+    if (!paket) { elStatus.className = 'error'; elStatus.textContent = 'Pilih paket penitipan dulu.'; return; }
+    if (jenisHewan === 'Anjing' && !ukuran) { elStatus.className = 'error'; elStatus.textContent = 'Pilih ukuran hewan dulu.'; return; }
     if (!tanggalTitip) { elStatus.className = 'error'; elStatus.textContent = 'Tanggal titip wajib diisi.'; return; }
-
-    var jenisHewan = document.getElementById('pJenisHewan').value;
-    var ukuran = (jenisHewan === 'Anjing') ? document.getElementById('pUkuran').value : '';
 
     elBtn.disabled = true; elBtn.textContent = 'Mengirim...';
 
