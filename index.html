@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>B&B Petshop — Sistem Internal</title>
+<title>B&B Petshop — Menu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -29,210 +29,166 @@
   body {
     margin: 0; background: var(--ground); color: var(--ink);
     font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 15px; line-height: 1.45; padding: 16px 14px 64px;
+    font-size: 15px; line-height: 1.45; padding: 16px 14px 100px;
     max-width: 560px; margin-left: auto; margin-right: auto;
   }
-  .kode-mono, input#webUrl, input#token { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
 
   header.app-header {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-    margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line);
   }
-  header.app-header h1 { font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
-  .petugas-pill {
-    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; font-weight: 600;
-    color: var(--ink-dim); background: var(--surface-sunken); border: 1px solid var(--line);
-    border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+  .header-user { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex: none;
+  }
+  .header-user .info { min-width: 0; }
+  .header-user .info h1 { font-size: 15.5px; margin: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .role-pill {
+    display: inline-block; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--accent); background: var(--accent-soft); padding: 1px 7px; border-radius: 999px; margin-top: 3px;
+  }
+  .btn-logout {
+    background: var(--surface-sunken); border: 1px solid var(--line); border-radius: 10px;
+    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer; padding: 0; flex: none;
   }
 
-  nav.tabbar {
-    display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto;
-    border-bottom: 1px solid var(--line); padding-bottom: 0;
-  }
-  nav.tabbar a {
-    flex: none; padding: 9px 14px; font-size: 13.5px; font-weight: 600;
-    color: var(--ink-dim); text-decoration: none; border-bottom: 2px solid transparent;
-    white-space: nowrap;
-  }
-  nav.tabbar a.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-  section.card {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-    padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow);
-  }
-  .card-label {
-    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
-    color: var(--ink-dim); margin: 0 0 12px;
-  }
-  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-dim); margin: 12px 0 5px; }
-  label:first-of-type { margin-top: 0; }
-  input, select {
-    width: 100%; padding: 11px 12px; font-size: 15px; font-family: inherit;
-    border: 1px solid var(--line); border-radius: 9px; background: var(--surface-sunken); color: var(--ink);
-  }
-  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
-  button {
-    font-family: inherit; font-size: 14.5px; font-weight: 600; padding: 12px;
-    border: none; border-radius: 9px; cursor: pointer; width: 100%;
-  }
-  .btn-primary { background: var(--accent); color: var(--accent-ink); margin-top: 14px; }
-
-  .toggle-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-  .toggle-row .card-label { margin: 0; }
-  .chevron { color: var(--ink-dim); font-size: 11px; transition: transform .15s ease; }
-  .chevron.open { transform: rotate(90deg); }
-  .settings-body { display: none; margin-top: 4px; }
-  .settings-body.open { display: block; }
-  .hint { font-size: 11.5px; color: var(--ink-dim); margin-top: 8px; line-height: 1.5; }
+  .greeting { font-size: 17px; font-weight: 700; margin: 0 0 4px; }
+  .greeting-sub { font-size: 13px; color: var(--ink-dim); margin: 0 0 18px; }
 
   .menu-grid { display: grid; gap: 12px; }
   .menu-card {
     display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--ink);
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-    padding: 16px; box-shadow: var(--shadow);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px; box-shadow: var(--shadow); transition: transform .06s ease;
   }
+  .menu-card:active { transform: scale(.98); }
   .menu-card .icon {
-    font-size: 26px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-    background: var(--accent-soft); border-radius: 12px; flex: none;
+    font-size: 24px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft); border-radius: 13px; flex: none;
   }
-  .menu-card .txt h2 { font-size: 15.5px; margin: 0 0 3px; font-weight: 700; }
+  .menu-card.admin .icon { background: var(--ok-bg); }
+  .menu-card .txt h2 { font-size: 15px; margin: 0 0 3px; font-weight: 700; }
   .menu-card .txt p { font-size: 12.5px; color: var(--ink-dim); margin: 0; line-height: 1.4; }
+  .menu-card .chevron { margin-left: auto; color: var(--ink-dim); font-size: 15px; flex: none; }
 
-  #status {
-    margin-top: 12px; padding: 10px 12px; border-radius: 9px; font-size: 13.5px;
-    display: none; font-weight: 600; border: 1px solid transparent;
+  .section-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-dim); margin: 22px 0 10px;
   }
-  .ok { background: var(--ok-bg); color: var(--ok-ink); display: block !important; }
-  .error { background: var(--err-bg); color: var(--err-ink); display: block !important; }
 
-  .footer-note { text-align: center; font-size: 11px; color: var(--ink-dim); margin-top: 20px; }
+  nav.bottom-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface);
+    border-top: 1px solid var(--line); display: flex;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -2px 12px rgba(32,31,26,.06); z-index: 100;
+  }
+  nav.bottom-nav a {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 7px 2px; text-decoration: none; color: var(--ink-dim); border-radius: 10px;
+  }
+  nav.bottom-nav a .ic { font-size: 21px; }
+  nav.bottom-nav a .lbl { font-size: 10px; font-weight: 600; }
+  nav.bottom-nav a.active { color: var(--accent); }
 </style>
 </head>
 <body>
 
 <header class="app-header">
-  <h1>🐾 B&amp;B Petshop</h1>
-  <span class="petugas-pill" id="petugasLabel">belum diatur</span>
+  <div class="header-user">
+    <div class="avatar" id="headerAvatar">?</div>
+    <div class="info">
+      <h1 id="headerNama">Memuat…</h1>
+      <span class="role-pill" id="headerRole">-</span>
+    </div>
+  </div>
+  <button type="button" class="btn-logout" onclick="prosesLogout()" title="Logout">🚪</button>
 </header>
 
-<nav class="tabbar">
-  <a href="index.html" class="active">🏠 Menu</a>
-  <a href="kasir.html">💰 Kasir</a>
-  <a href="stok.html">📦 Stok</a>
-  <a href="laporan.html">📊 Laporan</a>
-</nav>
-
-<section class="card">
-  <div class="toggle-row" id="settingsToggle">
-    <p class="card-label">Pengaturan Koneksi (berlaku untuk semua halaman)</p>
-    <span class="chevron" id="settingsChevron">▶</span>
-  </div>
-  <div class="settings-body" id="settingsBody">
-    <label for="webUrl">URL Web App Apps Script</label>
-    <input type="text" id="webUrl" class="kode-mono" placeholder="https://script.google.com/macros/s/xxx/exec">
-
-    <label for="token">Token Rahasia</label>
-    <input type="text" id="token" class="kode-mono" placeholder="Token dari SCAN_TOKEN di Code.gs">
-
-    <label for="petugas">Nama Petugas</label>
-    <input type="text" id="petugas" placeholder="mis. Adi">
-
-    <button type="button" class="btn-primary" onclick="simpanPengaturan()">Simpan Pengaturan</button>
-    <p class="hint">Pengaturan ini tersimpan di HP/komputer ini saja (localStorage) dan otomatis dipakai di halaman Kasir, Stok, dan Laporan — tidak perlu diisi ulang di tiap halaman.</p>
-  </div>
-  <div id="status" role="status"></div>
-</section>
+<p class="greeting" id="greetingText">Selamat datang 👋</p>
+<p class="greeting-sub">Pilih menu untuk mulai kerja.</p>
 
 <div class="menu-grid">
   <a class="menu-card" href="kasir.html">
     <div class="icon">💰</div>
-    <div class="txt">
-      <h2>Kasir</h2>
-      <p>Jual barang dari Master Barang UTM, termasuk scan barcode pakai kamera HP</p>
-    </div>
+    <div class="txt"><h2>Kasir</h2><p>Jual barang + scan barcode kamera</p></div>
+    <span class="chevron">›</span>
   </a>
   <a class="menu-card" href="stok.html">
     <div class="icon">📦</div>
-    <div class="txt">
-      <h2>Stok Opname</h2>
-      <p>Scan fisik barang untuk stok opname, dan transfer stok UTM ↔ Gudang</p>
-    </div>
+    <div class="txt"><h2>Stok</h2><p>Opname, Transfer, Pembelian, Harga</p></div>
+    <span class="chevron">›</span>
   </a>
   <a class="menu-card" href="laporan.html">
     <div class="icon">📊</div>
-    <div class="txt">
-      <h2>Laporan</h2>
-      <p>Ringkasan penjualan hari ini, selisih stok, dan riwayat terakhir</p>
-    </div>
+    <div class="txt"><h2>Laporan</h2><p>Ringkasan & konfirmasi booking</p></div>
+    <span class="chevron">›</span>
   </a>
 </div>
 
-<p class="footer-note">Data tersimpan langsung ke Google Sheet B&amp;B Petshop. Hanya untuk staf.</p>
+<div id="adminSection" style="display:none;">
+  <p class="section-label">Khusus Admin</p>
+  <div class="menu-grid">
+    <a class="menu-card admin" href="akun.html">
+      <div class="icon">👤</div>
+      <div class="txt"><h2>Kelola Akun</h2><p>Buat & atur akun login staf</p></div>
+      <span class="chevron">›</span>
+    </a>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="index.html" class="active"><span class="ic">🏠</span><span class="lbl">Menu</span></a>
+  <a href="kasir.html"><span class="ic">💰</span><span class="lbl">Kasir</span></a>
+  <a href="stok.html"><span class="ic">📦</span><span class="lbl">Stok</span></a>
+  <a href="laporan.html"><span class="ic">📊</span><span class="lbl">Laporan</span></a>
+</nav>
 
 <script>
-  var LS_URL = 'bb_staff_web_url';
-  var LS_TOKEN = 'bb_staff_token';
-  var LS_PETUGAS = 'bb_staff_petugas';
+(function () {
+  'use strict';
 
-  var elSettingsToggle = document.getElementById('settingsToggle');
-  var elSettingsBody = document.getElementById('settingsBody');
-  var elSettingsChevron = document.getElementById('settingsChevron');
-  var elWebUrl = document.getElementById('webUrl');
-  var elToken = document.getElementById('token');
-  var elPetugas = document.getElementById('petugas');
-  var elPetugasLabel = document.getElementById('petugasLabel');
-  var elStatus = document.getElementById('status');
+  // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
+
+  var LS_SESSION = 'bb_session_token';
+  var LS_NAMA = 'bb_session_nama';
+  var LS_ROLE = 'bb_session_role';
+  var LS_USERNAME = 'bb_session_username';
 
   function safeGet(key) { try { return localStorage.getItem(key) || ''; } catch (err) { return ''; } }
-  function safeSet(key, val) { try { localStorage.setItem(key, val); } catch (err) {} }
+  function safeRemove(key) { try { localStorage.removeItem(key); } catch (err) {} }
 
-  function tampilkanStatus(pesan, tipe) {
-    elStatus.className = tipe;
-    elStatus.textContent = pesan;
+  function apiUrl(action, extraParams) {
+    var qs = 'api=' + encodeURIComponent(action) + '&sessionToken=' + encodeURIComponent(safeGet(LS_SESSION));
+    if (extraParams) Object.keys(extraParams).forEach(function (k) { qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(extraParams[k]); });
+    return WEB_APP_URL + '?' + qs;
   }
 
-  elSettingsToggle.addEventListener('click', function () {
-    var buka = !elSettingsBody.classList.contains('open');
-    elSettingsBody.classList.toggle('open', buka);
-    elSettingsChevron.classList.toggle('open', buka);
-  });
-
-  function muatPengaturan() {
-    var url = safeGet(LS_URL);
-    var token = safeGet(LS_TOKEN);
-    var petugas = safeGet(LS_PETUGAS);
-    elWebUrl.value = url;
-    elToken.value = token;
-    elPetugas.value = petugas;
-    elPetugasLabel.textContent = petugas ? petugas : 'belum diatur';
-
-    if (!url || !token) {
-      elSettingsBody.classList.add('open');
-      elSettingsChevron.classList.add('open');
-    }
+  function bersihkanSesi() {
+    safeRemove(LS_SESSION); safeRemove(LS_NAMA); safeRemove(LS_ROLE); safeRemove(LS_USERNAME);
   }
 
-  window.simpanPengaturan = function () {
-    var url = elWebUrl.value.trim().replace(/\/+$/, '');
-    var token = elToken.value.trim();
-    var petugas = elPetugas.value.trim();
-
-    if (!url || !token) {
-      tampilkanStatus('URL Web App dan Token wajib diisi.', 'error');
-      return;
-    }
-
-    safeSet(LS_URL, url);
-    safeSet(LS_TOKEN, token);
-    safeSet(LS_PETUGAS, petugas);
-    elPetugasLabel.textContent = petugas ? petugas : 'belum diatur';
-
-    elSettingsBody.classList.remove('open');
-    elSettingsChevron.classList.remove('open');
-    tampilkanStatus('Pengaturan tersimpan. Berlaku juga untuk halaman Kasir, Stok, dan Laporan.', 'ok');
+  window.prosesLogout = function () {
+    if (!confirm('Yakin mau logout?')) return;
+    fetch(apiUrl('logout')).catch(function () {});
+    bersihkanSesi();
+    window.location.href = 'login.html';
   };
 
-  muatPengaturan();
+  // ---------- Init ----------
+
+  var session = safeGet(LS_SESSION);
+  if (!session) { window.location.href = 'login.html'; return; }
+
+  var nama = safeGet(LS_NAMA) || '?';
+  var role = safeGet(LS_ROLE) || 'Staf';
+  document.getElementById('headerAvatar').textContent = nama.charAt(0).toUpperCase();
+  document.getElementById('headerNama').textContent = nama;
+  document.getElementById('headerRole').textContent = role;
+  document.getElementById('greetingText').textContent = 'Halo, ' + nama + ' 👋';
+  if (role === 'Admin') document.getElementById('adminSection').style.display = 'block';
+})();
 </script>
 </body>
 </html>
