@@ -6,25 +6,25 @@
 <title>Laporan — B&B Petshop</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ground: #f5f3ee; --surface: #ffffff; --surface-sunken: #f0eee8;
-    --ink: #201f1a; --ink-dim: #726d60; --line: #e4e0d5;
-    --accent: #2c4bd4; --accent-ink: #ffffff; --accent-soft: #e8ecfc;
+    --ground: #fbf1e6; --surface: #ffffff; --surface-sunken: #f7e8d6;
+    --ink: #2b1d14; --ink-dim: #8a7062; --line: #ecdcc4;
+    --accent: #c96a2e; --accent-ink: #ffffff; --accent-soft: #fbe3ce;
     --ok-ink: #1c6b3c; --ok-bg: #e3f3e6; --err-ink: #af2a1e; --err-bg: #fbe8e4;
     --warn-ink: #8a5a00; --warn-bg: #fbeecb;
-    --focus-ring: #2c4bd4;
-    --shadow: 0 1px 2px rgba(32,31,26,.04), 0 6px 20px rgba(32,31,26,.06);
+    --focus-ring: #c96a2e;
+    --shadow: 0 1px 2px rgba(60,35,15,.06), 0 6px 20px rgba(60,35,15,.08);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --ground: #14140f; --surface: #1d1c17; --surface-sunken: #201f19;
-      --ink: #f1efe6; --ink-dim: #9a9587; --line: #34322a;
-      --accent: #7d93f0; --accent-ink: #12142a; --accent-soft: #232a4a;
+      --ground: #1c140e; --surface: #241a12; --surface-sunken: #2c2016;
+      --ink: #f5e8da; --ink-dim: #b89c87; --line: #3d2c1e;
+      --accent: #e8925a; --accent-ink: #1c140e; --accent-soft: #3d2416;
       --ok-ink: #7fd39a; --ok-bg: #17301f; --err-ink: #f0958a; --err-bg: #3a1f1b;
       --warn-ink: #e3b657; --warn-bg: #3a2f10;
-      --focus-ring: #7d93f0; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+      --focus-ring: #e8925a; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
     }
   }
   * { box-sizing: border-box; }
@@ -43,17 +43,18 @@
   }
   .header-user { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .avatar {
-    width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
-    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex: none;
+    width: 38px; height: 38px; border-radius: 13px; background: linear-gradient(155deg, var(--accent), #e08a52); color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex: none;
+    font-family: "Baloo 2", sans-serif; box-shadow: 0 3px 8px rgba(201,106,46,.25);
   }
   .header-user .info { min-width: 0; }
-  .header-user .info h1 { font-size: 14.5px; margin: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-user .info h1 { font-family: "Baloo 2", sans-serif; font-size: 15px; margin: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .role-pill {
     display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
     color: var(--accent); background: var(--accent-soft); padding: 1px 6px; border-radius: 999px; margin-top: 2px;
   }
   .btn-logout {
-    background: var(--surface-sunken); border: 1px solid var(--line); border-radius: 9px;
+    background: var(--surface-sunken); border: 1px solid var(--line); border-radius: 12px;
     width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
     font-size: 15px; cursor: pointer; padding: 0; flex: none;
   }
@@ -63,22 +64,23 @@
     padding: 3px 9px; white-space: nowrap;
   }
 
-  body { padding-bottom: 88px; }
+  body { padding-bottom: 92px; }
   nav.bottom-nav {
     position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface);
     border-top: 1px solid var(--line); display: flex;
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -2px 12px rgba(32,31,26,.06); z-index: 100;
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); box-shadow: 0 -2px 12px rgba(60,35,15,.06); z-index: 100;
   }
   nav.bottom-nav a {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 7px 2px; text-decoration: none; color: var(--ink-dim); border-radius: 10px;
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 2px; text-decoration: none; color: var(--ink-dim); border-radius: 14px; margin: 0 2px;
+    transition: background .12s ease, color .12s ease;
   }
-  nav.bottom-nav a .ic { font-size: 20px; }
-  nav.bottom-nav a .lbl { font-size: 9.5px; font-weight: 600; }
-  nav.bottom-nav a.active { color: var(--accent); }
+  nav.bottom-nav a .ic { font-size: 19px; }
+  nav.bottom-nav a .lbl { font-size: 9px; font-weight: 700; }
+  nav.bottom-nav a.active { color: var(--accent); background: var(--accent-soft); }
 
   section.card {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
     padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow);
   }
   .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-dim); margin: 0 0 12px; }
@@ -90,8 +92,8 @@
     border: 1px solid var(--line); border-radius: 9px; background: var(--surface-sunken); color: var(--ink);
   }
   input:focus, select:focus, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
-  button { font-family: inherit; font-size: 14.5px; font-weight: 600; padding: 12px; border: none; border-radius: 9px; cursor: pointer; width: 100%; }
-  .btn-primary { background: var(--accent); color: var(--accent-ink); margin-top: 14px; }
+  button { font-family: inherit; font-size: 14.5px; font-weight: 600; padding: 12px; border: none; border-radius: 13px; cursor: pointer; width: 100%; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #e08a52); color: var(--accent-ink); margin-top: 14px; box-shadow: 0 4px 12px rgba(201,106,46,.22); }
 
   .toggle-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
   .toggle-row .card-label { margin: 0; }
@@ -208,7 +210,7 @@
   'use strict';
 
   // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyMdvK_g4VKPICPITZxn9b4vwEMm7pGPpmuswtpRHw4H4lEP-6wwBPga-ECg66dpVJvCw/exec';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
 
   var LS_SESSION = 'bb_session_token';
   var LS_NAMA = 'bb_session_nama';
