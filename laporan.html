@@ -193,6 +193,15 @@
 </section>
 
 <section class="card">
+  <p class="card-label">Flow Stok Produk (14 Hari Terakhir)</p>
+  <div style="position:relative; height:220px;">
+    <canvas id="chartFlow"></canvas>
+  </div>
+  <p class="hint" id="flowEmptyHint" style="display:none; text-align:center; margin-top:10px;">Belum ada data Pembelian/Transaksi Kasir untuk ditampilkan.</p>
+  <p class="hint" style="margin-top:10px;">🟢 Stok Masuk = jumlah dari Pembelian &nbsp;·&nbsp; 🟠 Stok Keluar = jumlah barang terjual di Kasir</p>
+</section>
+
+<section class="card">
   <p class="card-label">Riwayat Transaksi Kasir Terakhir</p>
   <div class="riwayat-scroll">
     <table class="riwayat" id="tabelRiwayatKasir">
@@ -205,12 +214,13 @@
 
 <p class="footer-note">Konfirmasi/Batalkan booking di sini akan mengubah Status di sheet Log Booking Grooming / Log Penitipan.</p>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
 (function () {
   'use strict';
 
   // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxgse6XwoijfDaADt_o1QlSQHSPB9LMAtExDfvrperpgKaoJKb640kfoPoUsx1K4tkhkg/exec';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
 
   var LS_SESSION = 'bb_session_token';
   var LS_NAMA = 'bb_session_nama';
@@ -279,6 +289,53 @@
     muatRingkasan();
     muatBooking();
     muatRiwayatKasir();
+    muatFlowProduk();
+  }
+
+  // ---------- Flow Stok Produk ----------
+
+  var chartFlowInstance = null;
+
+  function muatFlowProduk() {
+    fetch(apiUrl('flowproduk', { hari: 14 }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (cekSesiExpired(res)) return;
+        if (!res || !res.success) return;
+
+        var totalMasuk = res.stokMasuk.reduce(function (a, b) { return a + b; }, 0);
+        var totalKeluar = res.stokKeluar.reduce(function (a, b) { return a + b; }, 0);
+        document.getElementById('flowEmptyHint').style.display = (totalMasuk === 0 && totalKeluar === 0) ? 'block' : 'none';
+
+        var ctx = document.getElementById('chartFlow').getContext('2d');
+        if (chartFlowInstance) chartFlowInstance.destroy();
+        chartFlowInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: res.tanggal,
+            datasets: [
+              {
+                label: 'Stok Masuk (Pembelian)',
+                data: res.stokMasuk,
+                borderColor: '#1c6b3c', backgroundColor: 'rgba(28,107,60,.12)',
+                tension: 0.3, fill: true, pointRadius: 2
+              },
+              {
+                label: 'Stok Keluar (Terjual)',
+                data: res.stokKeluar,
+                borderColor: '#c96a2e', backgroundColor: 'rgba(201,106,46,.12)',
+                tension: 0.3, fill: true, pointRadius: 2
+              }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          }
+        });
+      })
+      .catch(function () {});
   }
 
   // ---------- Ringkasan ----------
