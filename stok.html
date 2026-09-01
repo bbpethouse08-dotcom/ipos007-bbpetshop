@@ -37,22 +37,44 @@
   .tabular { font-variant-numeric: tabular-nums; }
 
   header.app-header {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
     margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line);
   }
-  header.app-header h1 { font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .header-user { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex: none;
+  }
+  .header-user .info { min-width: 0; }
+  .header-user .info h1 { font-size: 14.5px; margin: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .role-pill {
+    display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--accent); background: var(--accent-soft); padding: 1px 6px; border-radius: 999px; margin-top: 2px;
+  }
+  .btn-logout {
+    background: var(--surface-sunken); border: 1px solid var(--line); border-radius: 9px;
+    width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; cursor: pointer; padding: 0; flex: none;
+  }
   .item-pill {
-    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; font-weight: 600; color: var(--ink-dim);
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600; color: var(--ink-dim);
     background: var(--surface-sunken); border: 1px solid var(--line); border-radius: 999px;
-    padding: 3px 10px; white-space: nowrap;
+    padding: 3px 9px; white-space: nowrap;
   }
 
-  nav.tabbar { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; border-bottom: 1px solid var(--line); }
-  nav.tabbar a {
-    flex: none; padding: 9px 14px; font-size: 13.5px; font-weight: 600; color: var(--ink-dim);
-    text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap;
+  body { padding-bottom: 88px; }
+  nav.bottom-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface);
+    border-top: 1px solid var(--line); display: flex;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -2px 12px rgba(32,31,26,.06); z-index: 100;
   }
-  nav.tabbar a.active { color: var(--accent); border-bottom-color: var(--accent); }
+  nav.bottom-nav a {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 7px 2px; text-decoration: none; color: var(--ink-dim); border-radius: 10px;
+  }
+  nav.bottom-nav a .ic { font-size: 20px; }
+  nav.bottom-nav a .lbl { font-size: 9.5px; font-weight: 600; }
+  nav.bottom-nav a.active { color: var(--accent); }
 
   section.card {
     background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
@@ -140,33 +162,25 @@
 <body>
 
 <header class="app-header">
-  <h1>📦 Stok</h1>
-  <span class="item-pill tabular" id="itemCountLabel">memuat…</span>
+  <div class="header-user">
+    <div class="avatar" id="headerAvatar">?</div>
+    <div class="info">
+      <h1 id="headerNama">Memuat…</h1>
+      <span class="role-pill" id="headerRole">-</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="item-pill tabular" id="itemCountLabel">memuat…</span>
+    <button type="button" class="btn-logout" onclick="prosesLogout()" title="Logout">🚪</button>
+  </div>
 </header>
 
-<nav class="tabbar">
-  <a href="index.html">🏠 Menu</a>
-  <a href="kasir.html">💰 Kasir</a>
-  <a href="stok.html" class="active">📦 Stok</a>
-  <a href="laporan.html">📊 Laporan</a>
+<nav class="bottom-nav">
+  <a href="index.html"><span class="ic">🏠</span><span class="lbl">Menu</span></a>
+  <a href="kasir.html"><span class="ic">💰</span><span class="lbl">Kasir</span></a>
+  <a href="stok.html" class="active"><span class="ic">📦</span><span class="lbl">Stok</span></a>
+  <a href="laporan.html"><span class="ic">📊</span><span class="lbl">Laporan</span></a>
 </nav>
-
-<section class="card">
-  <div class="toggle-row" id="settingsToggle">
-    <p class="card-label">Pengaturan Koneksi</p>
-    <span class="chevron" id="settingsChevron">▶</span>
-  </div>
-  <div class="settings-body" id="settingsBody">
-    <label for="webUrl">URL Web App Apps Script</label>
-    <input type="text" id="webUrl" class="kode-mono" placeholder="https://script.google.com/macros/s/xxx/exec">
-    <label for="token">Token Rahasia</label>
-    <input type="text" id="token" class="kode-mono" placeholder="Token dari SCAN_TOKEN di Code.gs">
-    <label for="petugas">Nama Petugas</label>
-    <input type="text" id="petugas" placeholder="mis. Ketut">
-    <button type="button" class="btn-primary" onclick="simpanPengaturan()">Simpan &amp; Muat Data</button>
-    <p class="hint">Pengaturan sama dipakai di semua halaman (Menu, Kasir, Stok, Laporan).</p>
-  </div>
-</section>
 
 <section class="card">
   <p class="card-label">Mode Kerja</p>
@@ -277,18 +291,19 @@
 (function () {
   'use strict';
 
-  var LS_URL = 'bb_staff_web_url';
-  var LS_TOKEN = 'bb_staff_token';
-  var LS_PETUGAS = 'bb_staff_petugas';
+  // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
+
+  var LS_SESSION = 'bb_session_token';
+  var LS_NAMA = 'bb_session_nama';
+  var LS_ROLE = 'bb_session_role';
+  var LS_USERNAME = 'bb_session_username';
   var LS_LOKASI = 'bb_stok_lokasi';
   var LS_ARAH = 'bb_stok_arah';
 
-  var elSettingsToggle = document.getElementById('settingsToggle');
-  var elSettingsBody = document.getElementById('settingsBody');
-  var elSettingsChevron = document.getElementById('settingsChevron');
-  var elWebUrl = document.getElementById('webUrl');
-  var elToken = document.getElementById('token');
-  var elPetugas = document.getElementById('petugas');
+  var elHeaderAvatar = document.getElementById('headerAvatar');
+  var elHeaderNama = document.getElementById('headerNama');
+  var elHeaderRole = document.getElementById('headerRole');
   var elItemCountLabel = document.getElementById('itemCountLabel');
 
   var elBtnModeOpname = document.getElementById('btnModeOpname');
@@ -326,58 +341,47 @@
   var elRiwayatBody = document.getElementById('riwayatBody');
   var elRiwayatEmpty = document.getElementById('riwayatEmpty');
 
-  var mode = 'opname'; // 'opname' | 'transfer'
+  var mode = 'opname'; // 'opname' | 'transfer' | 'pembelian' | 'harga'
   var lokasiAktif = 'UTM';
   var arahAktif = 'GDG_KE_UTM';
-  var daftarBarang = []; // kode, nama, satuan, + (opname: stokFisikUtm/Gdg) atau (transfer: stokUtm/Gdg)
+  var daftarBarang = []; // kode, nama, satuan, + (opname: stokFisikUtm/Gdg) atau (lainnya: stokUtm/Gdg, hargaPokok, hargaJual)
   var html5QrCode = null;
   var kameraAktif = false;
   var scanTerkunci = false;
 
   function safeGet(key) { try { return localStorage.getItem(key) || ''; } catch (err) { return ''; } }
   function safeSet(key, val) { try { localStorage.setItem(key, val); } catch (err) {} }
+  function safeRemove(key) { try { localStorage.removeItem(key); } catch (err) {} }
   function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   function tampilkanStatus(pesan, tipe) { elStatus.className = tipe; elStatus.textContent = pesan; }
 
-  // ---------- Pengaturan ----------
+  // ---------- Sesi Login ----------
 
-  elSettingsToggle.addEventListener('click', function () {
-    var buka = !elSettingsBody.classList.contains('open');
-    elSettingsBody.classList.toggle('open', buka);
-    elSettingsChevron.classList.toggle('open', buka);
-  });
-
-  function muatPengaturanTersimpan() {
-    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN), petugas = safeGet(LS_PETUGAS);
-    elWebUrl.value = url; elToken.value = token; elPetugas.value = petugas;
-    pilihLokasi(safeGet(LS_LOKASI) || 'UTM');
-    pilihArah(safeGet(LS_ARAH) || 'GDG_KE_UTM');
-
-    if (!url || !token) {
-      elSettingsBody.classList.add('open'); elSettingsChevron.classList.add('open');
-    } else {
-      muatDaftarBarang();
-      muatRiwayat();
-    }
+  function bersihkanSesi() {
+    safeRemove(LS_SESSION); safeRemove(LS_NAMA); safeRemove(LS_ROLE); safeRemove(LS_USERNAME);
   }
 
-  window.simpanPengaturan = function () {
-    var url = elWebUrl.value.trim().replace(/\/+$/, '');
-    var token = elToken.value.trim();
-    var petugas = elPetugas.value.trim();
-    if (!url || !token) { tampilkanStatus('URL Web App dan Token wajib diisi.', 'error'); return; }
-    safeSet(LS_URL, url); safeSet(LS_TOKEN, token); safeSet(LS_PETUGAS, petugas);
-    elSettingsBody.classList.remove('open'); elSettingsChevron.classList.remove('open');
-    muatDaftarBarang();
-    muatRiwayat();
+  window.prosesLogout = function () {
+    if (!confirm('Yakin mau logout?')) return;
+    fetch(apiUrl('logout')).catch(function () {});
+    bersihkanSesi();
+    window.location.href = 'login.html';
   };
 
+  function cekSesiExpired(res) {
+    if (res && res.sessionExpired) {
+      bersihkanSesi();
+      window.location.href = 'login.html';
+      return true;
+    }
+    return false;
+  }
+
   function apiUrl(action, extraParams) {
-    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
-    var qs = 'api=' + encodeURIComponent(action) + '&token=' + encodeURIComponent(token);
+    var qs = 'api=' + encodeURIComponent(action) + '&sessionToken=' + encodeURIComponent(safeGet(LS_SESSION));
     if (extraParams) Object.keys(extraParams).forEach(function (k) { qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(extraParams[k]); });
-    return url + '?' + qs;
+    return WEB_APP_URL + '?' + qs;
   }
 
   // ---------- Mode ----------
@@ -444,8 +448,6 @@
   // ---------- Daftar barang (untuk autocomplete & info) ----------
 
   function muatDaftarBarang() {
-    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
-    if (!url || !token) return;
     elItemCountLabel.textContent = '(memuat...)';
 
     var action = (mode === 'opname') ? 'list' : 'listmaster';
@@ -589,12 +591,6 @@
 
   window.mulaiScan = function () {
     if (kameraAktif) return;
-    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
-    if (!url || !token) {
-      tampilkanStatus('Isi dulu URL Web App & Token di Pengaturan Koneksi.', 'error');
-      elSettingsBody.classList.add('open'); elSettingsChevron.classList.add('open');
-      return;
-    }
     var scanner = pastikanHtml5Qrcode();
     var config = {
       fps: 10,
@@ -628,13 +624,12 @@
     var kode = elKode.value.trim();
     var qty = Number(elQty.value) || 1;
     if (!kode) { tampilkanStatus('Kode item kosong.', 'error'); return; }
-    var petugas = safeGet(LS_PETUGAS);
 
     var promise;
     if (mode === 'opname') {
-      promise = fetch(apiUrl('scan', { kode: kode, qty: qty, petugas: petugas, lokasi: lokasiAktif }));
+      promise = fetch(apiUrl('scan', { kode: kode, qty: qty, lokasi: lokasiAktif }));
     } else if (mode === 'transfer') {
-      promise = fetch(apiUrl('transfer', { kode: kode, qty: qty, petugas: petugas, arah: arahAktif }));
+      promise = fetch(apiUrl('transfer', { kode: kode, qty: qty, arah: arahAktif }));
     } else if (mode === 'pembelian') {
       var hargaBeli = document.getElementById('belHargaBeli').value;
       var namaBarang = document.getElementById('belNamaBarang').value.trim();
@@ -648,11 +643,12 @@
     } else {
       var hargaJualBaru = elHgHargaJualBaru.value;
       if (!hargaJualBaru) { tampilkanStatus('Isi dulu Harga Jual Baru (atau Target Margin).', 'error'); return; }
-      promise = fetch(apiUrl('updatehargajual', { kode: kode, hargaJual: hargaJualBaru, petugas: petugas }));
+      promise = fetch(apiUrl('updatehargajual', { kode: kode, hargaJual: hargaJualBaru }));
     }
 
     promise.then(function (res) { return res.json(); })
       .then(function (res) {
+        if (cekSesiExpired(res)) return;
         if (res && res.success) {
           if (mode === 'opname') {
             tampilkanStatus(res.nama + ' [' + res.lokasi + '] -> Fisik Total: ' + res.stokFisikTotal, 'ok');
@@ -681,12 +677,13 @@
   // ---------- Riwayat ----------
 
   function muatRiwayat() {
-    var url = safeGet(LS_URL), token = safeGet(LS_TOKEN);
-    if (!url || !token) return;
     var action = (mode === 'opname') ? 'history' : (mode === 'transfer') ? 'riwayattransfer' : (mode === 'pembelian') ? 'riwayatpembelian' : 'riwayatharga';
     fetch(apiUrl(action, { limit: 30 }))
       .then(function (res) { return res.json(); })
-      .then(function (data) { if (data && data.success) renderRiwayat(data.riwayat || []); })
+      .then(function (data) {
+        if (cekSesiExpired(data)) return;
+        if (data && data.success) renderRiwayat(data.riwayat || []);
+      })
       .catch(function () {});
   }
 
@@ -785,7 +782,19 @@
 
   // ---------- Init ----------
 
-  muatPengaturanTersimpan();
+  var session = safeGet(LS_SESSION);
+  if (!session) { window.location.href = 'login.html'; return; }
+
+  var namaUser = safeGet(LS_NAMA) || '?';
+  var roleUser = safeGet(LS_ROLE) || 'Staf';
+  elHeaderAvatar.textContent = namaUser.charAt(0).toUpperCase();
+  elHeaderNama.textContent = namaUser;
+  elHeaderRole.textContent = roleUser;
+
+  pilihLokasi(safeGet(LS_LOKASI) || 'UTM');
+  pilihArah(safeGet(LS_ARAH) || 'GDG_KE_UTM');
+  muatDaftarBarang();
+  muatRiwayat();
 })();
 </script>
 </body>
