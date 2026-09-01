@@ -133,6 +133,20 @@
   .btn-cancel { background: var(--err-bg); color: var(--err-ink); }
   .empty-hint { color: var(--ink-dim); font-size: 13px; text-align: center; padding: 14px 0; }
 
+  .rank-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .rank-item:last-child { border-bottom: none; }
+  .rank-num {
+    width: 22px; height: 22px; border-radius: 7px; background: var(--surface-sunken); color: var(--ink-dim);
+    display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex: none;
+  }
+  .rank-item:nth-child(1) .rank-num { background: var(--accent-soft); color: var(--accent); }
+  .rank-body { flex: 1; min-width: 0; }
+  .rank-nama { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-jenis { font-size: 10.5px; color: var(--ink-dim); }
+  .rank-bar-track { background: var(--surface-sunken); border-radius: 999px; height: 6px; margin-top: 5px; overflow: hidden; }
+  .rank-bar-fill { background: linear-gradient(90deg, var(--accent), #e08a52); height: 100%; border-radius: 999px; }
+  .rank-qty { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 700; flex: none; min-width: 34px; text-align: right; }
+
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   td, th { padding: 7px 5px; border-bottom: 1px solid var(--line); text-align: left; }
   th { color: var(--ink-dim); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
@@ -193,12 +207,17 @@
 </section>
 
 <section class="card">
-  <p class="card-label">Flow Stok Produk (14 Hari Terakhir)</p>
-  <div style="position:relative; height:220px;">
-    <canvas id="chartFlow"></canvas>
+  <p class="card-label">Produk Terlaris &amp; Kurang Laris</p>
+  <label for="filterJenis">Filter Jenis</label>
+  <select id="filterJenis" onchange="muatProdukTerlaris()">
+    <option value="">Semua Jenis</option>
+  </select>
+  <div class="subtab-row" style="margin-top:12px;">
+    <button type="button" class="subtab-btn aktif" id="btnTabTerlaris" onclick="pilihTabProduk('terlaris')">🔥 Terlaris</button>
+    <button type="button" class="subtab-btn" id="btnTabKurangLaris" onclick="pilihTabProduk('kuranglaris')">🐌 Kurang Laris</button>
   </div>
-  <p class="hint" id="flowEmptyHint" style="display:none; text-align:center; margin-top:10px;">Belum ada data Pembelian/Transaksi Kasir untuk ditampilkan.</p>
-  <p class="hint" style="margin-top:10px;">🟢 Stok Masuk = jumlah dari Pembelian &nbsp;·&nbsp; 🟠 Stok Keluar = jumlah barang terjual di Kasir</p>
+  <div id="produkRankList" style="margin-top:12px;"></div>
+  <p class="empty-hint" id="produkRankEmpty" style="display:none;">Belum ada data transaksi Kasir untuk dihitung.</p>
 </section>
 
 <section class="card">
@@ -214,13 +233,12 @@
 
 <p class="footer-note">Konfirmasi/Batalkan booking di sini akan mengubah Status di sheet Log Booking Grooming / Log Penitipan.</p>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
 (function () {
   'use strict';
 
   // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxtti2suaeFTGWPZrtdWPfpSdz3EGQJKaGLbx9c5P5yUqVIawo1FpvWxoEIz-gnt0Ccxg/exec';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
 
   var LS_SESSION = 'bb_session_token';
   var LS_NAMA = 'bb_session_nama';
@@ -289,53 +307,82 @@
     muatRingkasan();
     muatBooking();
     muatRiwayatKasir();
-    muatFlowProduk();
+    muatDaftarJenis();
+    muatProdukTerlaris();
   }
 
-  // ---------- Flow Stok Produk ----------
+  // ---------- Produk Terlaris & Kurang Laris ----------
 
-  var chartFlowInstance = null;
+  var tabProdukAktif = 'terlaris';
 
-  function muatFlowProduk() {
-    fetch(apiUrl('flowproduk', { hari: 14 }))
+  window.pilihTabProduk = function (tab) {
+    tabProdukAktif = tab;
+    document.getElementById('btnTabTerlaris').classList.toggle('aktif', tab === 'terlaris');
+    document.getElementById('btnTabKurangLaris').classList.toggle('aktif', tab === 'kuranglaris');
+    renderProdukRankTerakhir();
+  };
+
+  var dataProdukTerakhir = { terlaris: [], kurangLaris: [] };
+
+  function muatDaftarJenis() {
+    fetch(apiUrl('daftarjenis'))
       .then(function (res) { return res.json(); })
       .then(function (res) {
         if (cekSesiExpired(res)) return;
         if (!res || !res.success) return;
-
-        var totalMasuk = res.stokMasuk.reduce(function (a, b) { return a + b; }, 0);
-        var totalKeluar = res.stokKeluar.reduce(function (a, b) { return a + b; }, 0);
-        document.getElementById('flowEmptyHint').style.display = (totalMasuk === 0 && totalKeluar === 0) ? 'block' : 'none';
-
-        var ctx = document.getElementById('chartFlow').getContext('2d');
-        if (chartFlowInstance) chartFlowInstance.destroy();
-        chartFlowInstance = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: res.tanggal,
-            datasets: [
-              {
-                label: 'Stok Masuk (Pembelian)',
-                data: res.stokMasuk,
-                borderColor: '#1c6b3c', backgroundColor: 'rgba(28,107,60,.12)',
-                tension: 0.3, fill: true, pointRadius: 2
-              },
-              {
-                label: 'Stok Keluar (Terjual)',
-                data: res.stokKeluar,
-                borderColor: '#c96a2e', backgroundColor: 'rgba(201,106,46,.12)',
-                tension: 0.3, fill: true, pointRadius: 2
-              }
-            ]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-          }
+        var el = document.getElementById('filterJenis');
+        (res.jenis || []).forEach(function (j) {
+          var opt = document.createElement('option');
+          opt.value = j; opt.textContent = j;
+          el.appendChild(opt);
         });
       })
       .catch(function () {});
+  }
+
+  window.muatProdukTerlaris = function () {
+    var jenis = document.getElementById('filterJenis').value;
+    fetch(apiUrl('produkterlaris', { jenis: jenis, limit: 10 }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (cekSesiExpired(res)) return;
+        if (!res || !res.success) return;
+        dataProdukTerakhir.terlaris = res.terlaris || [];
+        dataProdukTerakhir.kurangLaris = res.kurangLaris || [];
+        renderProdukRankTerakhir();
+      })
+      .catch(function () {});
+  };
+
+  function renderProdukRankTerakhir() {
+    var list = (tabProdukAktif === 'terlaris') ? dataProdukTerakhir.terlaris : dataProdukTerakhir.kurangLaris;
+    var wrap = document.getElementById('produkRankList');
+    var elEmpty = document.getElementById('produkRankEmpty');
+    wrap.innerHTML = '';
+
+    var totalTerjualKeseluruhan = dataProdukTerakhir.terlaris.reduce(function (s, x) { return s + x.qty; }, 0);
+    if (tabProdukAktif === 'terlaris' && totalTerjualKeseluruhan === 0) {
+      elEmpty.style.display = 'block';
+      return;
+    }
+    elEmpty.style.display = 'none';
+
+    var maxQty = Math.max.apply(null, list.map(function (x) { return x.qty; }).concat([1]));
+
+    list.forEach(function (item, idx) {
+      var div = document.createElement('div');
+      div.className = 'rank-item';
+      var lebar = Math.round((item.qty / maxQty) * 100);
+      div.innerHTML =
+        '<div class="rank-num">' + (idx + 1) + '</div>' +
+        '<div class="rank-body">' +
+          '<div class="rank-nama">' + escapeHtml(item.nama) + '</div>' +
+          '<div class="rank-jenis">' + escapeHtml(item.jenis || '-') + '</div>' +
+          '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + lebar + '%;"></div></div>' +
+        '</div>' +
+        '<div class="rank-qty tabular">' + item.qty + '</div>';
+      wrap.appendChild(div);
+    });
   }
 
   // ---------- Ringkasan ----------
