@@ -111,17 +111,17 @@
 <p class="greeting-sub">Pilih menu untuk mulai kerja.</p>
 
 <div class="menu-grid">
-  <a class="menu-card" href="kasir.html">
+  <a class="menu-card" href="kasir.html" id="cardKasir">
     <div class="icon">💰</div>
     <div class="txt"><h2>Kasir</h2><p>Jual barang + scan barcode kamera</p></div>
     <span class="chevron">›</span>
   </a>
-  <a class="menu-card" href="stok.html">
+  <a class="menu-card" href="stok.html" id="cardStok">
     <div class="icon">📦</div>
     <div class="txt"><h2>Stok</h2><p>Opname, Transfer, Pembelian, Harga</p></div>
     <span class="chevron">›</span>
   </a>
-  <a class="menu-card" href="laporan.html">
+  <a class="menu-card" href="laporan.html" id="cardLaporan">
     <div class="icon">📊</div>
     <div class="txt"><h2>Laporan</h2><p>Ringkasan & konfirmasi booking</p></div>
     <span class="chevron">›</span>
@@ -141,9 +141,9 @@
 
 <nav class="bottom-nav">
   <a href="index.html" class="active"><span class="ic">🏠</span><span class="lbl">Menu</span></a>
-  <a href="kasir.html"><span class="ic">💰</span><span class="lbl">Kasir</span></a>
-  <a href="stok.html"><span class="ic">📦</span><span class="lbl">Stok</span></a>
-  <a href="laporan.html"><span class="ic">📊</span><span class="lbl">Laporan</span></a>
+  <a href="kasir.html" id="navKasir"><span class="ic">💰</span><span class="lbl">Kasir</span></a>
+  <a href="stok.html" id="navStok"><span class="ic">📦</span><span class="lbl">Stok</span></a>
+  <a href="laporan.html" id="navLaporan"><span class="ic">📊</span><span class="lbl">Laporan</span></a>
 </nav>
 
 <script>
@@ -151,7 +151,7 @@
   'use strict';
 
   // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwFbwAwkQm-i7n5tWHz77nEQlaeKXnMb1pxdeQlMXfTw04aRRbJGU2-y2yGBPhbGeIT1A/exec';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
 
   var LS_SESSION = 'bb_session_token';
   var LS_NAMA = 'bb_session_nama';
@@ -184,12 +184,26 @@
   if (!session) { window.location.href = 'login.html'; return; }
 
   var nama = safeGet(LS_NAMA) || '?';
-  var role = safeGet(LS_ROLE) || 'Staf';
+  var role = safeGet(LS_ROLE) || 'Kasir';
   document.getElementById('headerAvatar').textContent = nama.charAt(0).toUpperCase();
   document.getElementById('headerNama').textContent = nama;
   document.getElementById('headerRole').textContent = role;
   document.getElementById('greetingText').textContent = 'Halo, ' + nama + ' 👋';
   if (role === 'Admin') document.getElementById('adminSection').style.display = 'block';
+
+  // Tampilkan menu & tab nav cuma yang relevan sesuai role.
+  if (role !== 'Admin' && role !== 'Kasir') {
+    document.getElementById('cardKasir').style.display = 'none';
+    document.getElementById('navKasir').style.display = 'none';
+  }
+  if (role !== 'Admin' && role !== 'Gudang') {
+    document.getElementById('cardStok').style.display = 'none';
+    document.getElementById('navStok').style.display = 'none';
+  }
+  if (role !== 'Admin') {
+    document.getElementById('cardLaporan').style.display = 'none';
+    document.getElementById('navLaporan').style.display = 'none';
+  }
 })();
 </script>
 </body>

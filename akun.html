@@ -94,9 +94,14 @@
   .badge-row { display: flex; gap: 6px; margin-left: auto; }
   .badge { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 3px 8px; border-radius: 999px; }
   .badge-admin { background: var(--accent-soft); color: var(--accent); }
-  .badge-staf { background: var(--surface-sunken); color: var(--ink-dim); }
+  .badge-kasir { background: #e0ecfb; color: #2d5f9e; }
+  .badge-gudang { background: #e5f0e0; color: #4a7a2e; }
   .badge-aktif { background: var(--ok-bg); color: var(--ok-ink); }
   .badge-nonaktif { background: var(--err-bg); color: var(--err-ink); }
+  .role-select {
+    padding: 8px 10px; font-size: 12.5px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--surface-sunken); color: var(--ink); flex: 1; margin-top: 0;
+  }
 
   .akun-aksi { display: flex; gap: 6px; margin-top: 10px; }
   .akun-aksi button { flex: 1; padding: 8px; font-size: 11.5px; margin-top: 0; border-radius: 7px; background: var(--surface-sunken); color: var(--ink); }
@@ -145,8 +150,9 @@
   <input type="text" id="newNama" placeholder="mis. Indah">
   <label for="newRole">Role</label>
   <select id="newRole">
-    <option value="Staf">Staf</option>
-    <option value="Admin">Admin</option>
+    <option value="Kasir">Kasir — hanya akses menu Kasir</option>
+    <option value="Gudang">Gudang — hanya akses menu Stok</option>
+    <option value="Admin">Admin — akses semua menu</option>
   </select>
   <button type="button" class="btn-primary" onclick="buatAkunBaru()">➕ Buat Akun</button>
   <div id="status" role="status"></div>
@@ -170,7 +176,7 @@
   'use strict';
 
   // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwFbwAwkQm-i7n5tWHz77nEQlaeKXnMb1pxdeQlMXfTw04aRRbJGU2-y2yGBPhbGeIT1A/exec';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
 
   var LS_SESSION = 'bb_session_token';
   var LS_NAMA = 'bb_session_nama';
@@ -256,6 +262,12 @@
       .catch(function () { tampilkanStatus('Gagal terhubung ke Apps Script.', 'error'); });
   }
 
+  function labelRoleBadge(role) {
+    if (role === 'Admin') return 'badge-admin';
+    if (role === 'Gudang') return 'badge-gudang';
+    return 'badge-kasir';
+  }
+
   function renderDaftarAkun(list) {
     elDaftarAkunWrap.innerHTML = '';
     if (list.length === 0) { elAkunEmpty.style.display = 'block'; return; }
@@ -269,7 +281,7 @@
           '<div class="akun-avatar">' + escapeHtml((a.nama || '?').charAt(0).toUpperCase()) + '</div>' +
           '<div><div class="nama-baris">' + escapeHtml(a.nama) + '</div><div class="username-baris">@' + escapeHtml(a.username) + '</div></div>' +
           '<div class="badge-row">' +
-            '<span class="badge ' + (a.role === 'Admin' ? 'badge-admin' : 'badge-staf') + '">' + escapeHtml(a.role) + '</span>' +
+            '<span class="badge ' + labelRoleBadge(a.role) + '">' + escapeHtml(a.role) + '</span>' +
             '<span class="badge ' + (a.status === 'Aktif' ? 'badge-aktif' : 'badge-nonaktif') + '">' + escapeHtml(a.status) + '</span>' +
           '</div>' +
         '</div>';
@@ -282,10 +294,17 @@
       btnPw.addEventListener('click', function () { gantiPassword(a.username); });
       aksi.appendChild(btnPw);
 
-      var btnRole = document.createElement('button');
-      btnRole.type = 'button'; btnRole.textContent = a.role === 'Admin' ? '⬇️ Jadikan Staf' : '⬆️ Jadikan Admin';
-      btnRole.addEventListener('click', function () { ubahRole(a.username, a.role === 'Admin' ? 'Staf' : 'Admin'); });
-      aksi.appendChild(btnRole);
+      var selectRole = document.createElement('select');
+      selectRole.className = 'role-select';
+      selectRole.setAttribute('data-role-lama', a.role);
+      ['Kasir', 'Gudang', 'Admin'].forEach(function (r) {
+        var opt = document.createElement('option');
+        opt.value = r; opt.textContent = r;
+        if (r === a.role) opt.selected = true;
+        selectRole.appendChild(opt);
+      });
+      selectRole.addEventListener('change', function () { ubahRole(a.username, selectRole.value, selectRole); });
+      aksi.appendChild(selectRole);
 
       var btnStatus = document.createElement('button');
       btnStatus.type = 'button';
@@ -312,16 +331,32 @@
       .catch(function () { tampilkanStatus('Gagal terhubung ke Apps Script.', 'error'); });
   }
 
-  function ubahRole(username, roleBaru) {
-    if (!confirm('Ubah role @' + username + ' jadi ' + roleBaru + '?')) return;
+  function ubahRole(username, roleBaru, selectEl) {
+    var roleLama = selectEl.getAttribute('data-role-lama') || roleBaru;
+    if (!confirm('Ubah role @' + username + ' jadi ' + roleBaru + '?')) {
+      selectEl.value = roleLama;
+      return;
+    }
+    selectEl.disabled = true;
     fetch(apiUrl('updateakun', { username: username, roleBaru: roleBaru }))
       .then(function (res) { return res.json(); })
       .then(function (res) {
+        selectEl.disabled = false;
         if (cekSesiExpired(res)) return;
-        if (res && res.success) { tampilkanStatus('Role @' + username + ' diubah jadi ' + roleBaru + '.', 'ok'); muatDaftarAkun(); }
-        else { tampilkanStatus((res && res.message) || 'Gagal mengubah role.', 'error'); }
+        if (res && res.success) {
+          tampilkanStatus('Role @' + username + ' diubah jadi ' + roleBaru + '.', 'ok');
+          selectEl.setAttribute('data-role-lama', roleBaru);
+          muatDaftarAkun();
+        } else {
+          tampilkanStatus((res && res.message) || 'Gagal mengubah role.', 'error');
+          selectEl.value = roleLama;
+        }
       })
-      .catch(function () { tampilkanStatus('Gagal terhubung ke Apps Script.', 'error'); });
+      .catch(function () {
+        selectEl.disabled = false;
+        tampilkanStatus('Gagal terhubung ke Apps Script.', 'error');
+        selectEl.value = roleLama;
+      });
   }
 
   function ubahStatus(username, statusBaru) {

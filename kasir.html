@@ -283,7 +283,7 @@
   'use strict';
 
   // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwFbwAwkQm-i7n5tWHz77nEQlaeKXnMb1pxdeQlMXfTw04aRRbJGU2-y2yGBPhbGeIT1A/exec';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
 
   var LS_SESSION = 'bb_session_token';
   var LS_NAMA = 'bb_session_nama';
@@ -756,7 +756,14 @@
   if (!session) { window.location.href = 'login.html'; return; }
 
   var namaUser = safeGet(LS_NAMA) || '?';
-  var roleUser = safeGet(LS_ROLE) || 'Staf';
+  var roleUser = safeGet(LS_ROLE) || 'Kasir';
+
+  if (roleUser !== 'Admin' && roleUser !== 'Kasir') {
+    alert('Halaman Kasir tidak tersedia untuk role Anda.');
+    window.location.href = 'index.html';
+    return;
+  }
+
   elHeaderAvatar.textContent = namaUser.charAt(0).toUpperCase();
   elHeaderNama.textContent = namaUser;
   elHeaderRole.textContent = roleUser;
