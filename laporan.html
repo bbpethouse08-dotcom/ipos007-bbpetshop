@@ -186,59 +186,117 @@
   <a href="laporan.html" class="active"><span class="ic">📊</span><span class="lbl">Laporan</span></a>
 </nav>
 
-<section class="card">
-  <p class="card-label">Ringkasan Hari Ini</p>
-  <div class="stat-grid">
-    <div class="stat-box"><div class="num tabular" id="statOmzet">Rp0</div><div class="lbl">Omzet Kasir</div></div>
-    <div class="stat-box"><div class="num tabular" id="statLaba">Rp0</div><div class="lbl">Laba Kotor</div></div>
-    <div class="stat-box"><div class="num tabular" id="statTransaksi">0</div><div class="lbl">Transaksi Kasir</div></div>
-    <div class="stat-box"><div class="num tabular" id="statMenunggu">0</div><div class="lbl">Booking Menunggu</div></div>
-  </div>
-</section>
+<div class="subtab-row">
+  <button type="button" class="subtab-btn aktif" id="btnMainRingkasan" onclick="pilihMainTab('ringkasan')">📊 Ringkasan</button>
+  <button type="button" class="subtab-btn" id="btnMainLabaRugi" onclick="pilihMainTab('labarugi')">💰 Laba Rugi</button>
+  <button type="button" class="subtab-btn" id="btnMainBooking" onclick="pilihMainTab('booking')">📅 Booking</button>
+  <button type="button" class="subtab-btn" id="btnMainRiwayat" onclick="pilihMainTab('riwayat')">🧾 Riwayat</button>
+</div>
 
-<section class="card">
-  <p class="card-label">Booking Masuk</p>
-  <div class="subtab-row">
-    <button type="button" class="subtab-btn aktif" id="btnTabGrooming" onclick="pilihTabBooking('grooming')">✂️ Grooming</button>
-    <button type="button" class="subtab-btn" id="btnTabPenitipan" onclick="pilihTabBooking('penitipan')">🏨 Penitipan</button>
-  </div>
-  <div id="bookingList"></div>
-  <p class="empty-hint" id="bookingEmpty" style="display:none;">Belum ada booking.</p>
-</section>
+<div id="mainRingkasan">
+  <section class="card">
+    <p class="card-label">Ringkasan Hari Ini</p>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num tabular" id="statOmzet">Rp0</div><div class="lbl">Omzet Kasir</div></div>
+      <div class="stat-box"><div class="num tabular" id="statLaba">Rp0</div><div class="lbl">Laba Kotor</div></div>
+      <div class="stat-box"><div class="num tabular" id="statTransaksi">0</div><div class="lbl">Transaksi Kasir</div></div>
+      <div class="stat-box"><div class="num tabular" id="statMenunggu">0</div><div class="lbl">Booking Menunggu</div></div>
+    </div>
+  </section>
 
-<section class="card">
-  <p class="card-label">Produk Terlaris &amp; Kurang Laris</p>
-  <label for="filterJenis">Filter Jenis</label>
-  <select id="filterJenis" onchange="muatProdukTerlaris()">
-    <option value="">Semua Jenis</option>
-  </select>
-  <div class="subtab-row" style="margin-top:12px;">
-    <button type="button" class="subtab-btn aktif" id="btnTabTerlaris" onclick="pilihTabProduk('terlaris')">🔥 Terlaris</button>
-    <button type="button" class="subtab-btn" id="btnTabKurangLaris" onclick="pilihTabProduk('kuranglaris')">🐌 Kurang Laris</button>
-  </div>
-  <div id="produkRankList" style="margin-top:12px;"></div>
-  <p class="empty-hint" id="produkRankEmpty" style="display:none;">Belum ada data transaksi Kasir untuk dihitung.</p>
-</section>
+  <section class="card">
+    <p class="card-label">Produk Terlaris &amp; Kurang Laris</p>
+    <label for="filterJenis">Filter Jenis</label>
+    <select id="filterJenis" onchange="muatProdukTerlaris()">
+      <option value="">Semua Jenis</option>
+    </select>
+    <div class="subtab-row" style="margin-top:12px;">
+      <button type="button" class="subtab-btn aktif" id="btnTabTerlaris" onclick="pilihTabProduk('terlaris')">🔥 Terlaris</button>
+      <button type="button" class="subtab-btn" id="btnTabKurangLaris" onclick="pilihTabProduk('kuranglaris')">🐌 Kurang Laris</button>
+    </div>
+    <div id="produkRankList" style="margin-top:12px;"></div>
+    <p class="empty-hint" id="produkRankEmpty" style="display:none;">Belum ada data transaksi Kasir untuk dihitung.</p>
+  </section>
+</div>
 
-<section class="card">
-  <p class="card-label">Riwayat Transaksi Kasir Terakhir</p>
-  <div class="riwayat-scroll">
-    <table class="riwayat" id="tabelRiwayatKasir">
-      <thead><tr><th>Waktu</th><th>ID</th><th>Total</th><th>Metode</th></tr></thead>
-      <tbody id="riwayatKasirBody"></tbody>
-    </table>
-  </div>
-  <p class="empty-hint" id="riwayatKasirEmpty">Belum ada transaksi.</p>
-</section>
+<div id="mainLabaRugi" style="display:none;">
+  <section class="card">
+    <p class="card-label">Laba Rugi Bulanan</p>
+    <div style="display:flex; gap:8px;">
+      <div style="flex:1;">
+        <label for="lrBulan">Bulan</label>
+        <select id="lrBulan" onchange="muatLabaRugi()">
+          <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+          <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+          <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+          <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+        </select>
+      </div>
+      <div style="flex:1;">
+        <label for="lrTahun">Tahun</label>
+        <input type="number" id="lrTahun" class="tabular" oninput="muatLabaRugi()">
+      </div>
+    </div>
 
-<p class="footer-note">Konfirmasi/Batalkan booking di sini akan mengubah Status di sheet Log Booking Grooming / Log Penitipan.</p>
+    <div class="stat-grid" style="margin-top:14px;">
+      <div class="stat-box"><div class="num tabular" id="lrPenjualan">Rp0</div><div class="lbl">Penjualan</div></div>
+      <div class="stat-box"><div class="num tabular" id="lrHpp">Rp0</div><div class="lbl">HPP</div></div>
+      <div class="stat-box"><div class="num tabular" id="lrLabaKotor">Rp0</div><div class="lbl">Laba Kotor</div></div>
+      <div class="stat-box"><div class="num tabular" id="lrPengeluaran">Rp0</div><div class="lbl">Pengeluaran</div></div>
+    </div>
+    <div class="stat-box" style="margin-top:10px; text-align:center;">
+      <div class="num tabular" id="lrLabaBersih" style="font-size:24px;">Rp0</div>
+      <div class="lbl">Laba Bersih (Penjualan − HPP − Pengeluaran)</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <p class="card-label">Penjualan per Jenis Barang (estimasi)</p>
+    <div id="lrPerJenisList"></div>
+    <p class="empty-hint" id="lrPerJenisEmpty" style="display:none;">Belum ada penjualan bulan ini.</p>
+    <p class="hint" style="margin-top:10px;">Estimasi pakai Harga Jual saat ini — kalau harga barang pernah berubah di tengah bulan, angka per-jenis ini perkiraan (bukan 100% presisi). Total Penjualan di atas tetap akurat.</p>
+  </section>
+
+  <section class="card">
+    <p class="card-label">Pengeluaran per Kategori</p>
+    <div id="lrPerKategoriList"></div>
+    <p class="empty-hint" id="lrPerKategoriEmpty" style="display:none;">Belum ada pengeluaran bulan ini.</p>
+  </section>
+</div>
+
+<div id="mainBooking" style="display:none;">
+  <section class="card">
+    <p class="card-label">Booking Masuk</p>
+    <div class="subtab-row">
+      <button type="button" class="subtab-btn aktif" id="btnTabGrooming" onclick="pilihTabBooking('grooming')">✂️ Grooming</button>
+      <button type="button" class="subtab-btn" id="btnTabPenitipan" onclick="pilihTabBooking('penitipan')">🏨 Penitipan</button>
+    </div>
+    <div id="bookingList"></div>
+    <p class="empty-hint" id="bookingEmpty" style="display:none;">Belum ada booking.</p>
+  </section>
+</div>
+
+<div id="mainRiwayat" style="display:none;">
+  <section class="card">
+    <p class="card-label">Riwayat Transaksi Kasir Terakhir</p>
+    <div class="riwayat-scroll">
+      <table class="riwayat" id="tabelRiwayatKasir">
+        <thead><tr><th>Waktu</th><th>ID</th><th>Total</th><th>Metode</th></tr></thead>
+        <tbody id="riwayatKasirBody"></tbody>
+      </table>
+    </div>
+    <p class="empty-hint" id="riwayatKasirEmpty">Belum ada transaksi.</p>
+  </section>
+</div>
+
+<p class="footer-note">Konfirmasi/Batalkan booking di tab Booking akan mengubah Status di sheet Log Booking Grooming / Log Penitipan.</p>
 
 <script>
 (function () {
   'use strict';
 
   // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzbAp3WIwY2yu27Unbnh30nW802W1_BT-Ulmu8UIOEl2xmZP93_FF-Pj4GZS_8PKJX0Tw/exec';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
 
   var LS_SESSION = 'bb_session_token';
   var LS_NAMA = 'bb_session_nama';
@@ -304,11 +362,75 @@
     var today = new Date();
     var hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][today.getDay()];
     elTanggalLabel.textContent = hari + ', ' + today.toLocaleDateString('id-ID');
+    document.getElementById('lrBulan').value = String(today.getMonth() + 1);
+    document.getElementById('lrTahun').value = String(today.getFullYear());
     muatRingkasan();
     muatBooking();
     muatRiwayatKasir();
     muatDaftarJenis();
     muatProdukTerlaris();
+    muatLabaRugi();
+  }
+
+  // ---------- Tab utama ----------
+
+  window.pilihMainTab = function (tab) {
+    document.getElementById('btnMainRingkasan').classList.toggle('aktif', tab === 'ringkasan');
+    document.getElementById('btnMainLabaRugi').classList.toggle('aktif', tab === 'labarugi');
+    document.getElementById('btnMainBooking').classList.toggle('aktif', tab === 'booking');
+    document.getElementById('btnMainRiwayat').classList.toggle('aktif', tab === 'riwayat');
+    document.getElementById('mainRingkasan').style.display = (tab === 'ringkasan') ? 'block' : 'none';
+    document.getElementById('mainLabaRugi').style.display = (tab === 'labarugi') ? 'block' : 'none';
+    document.getElementById('mainBooking').style.display = (tab === 'booking') ? 'block' : 'none';
+    document.getElementById('mainRiwayat').style.display = (tab === 'riwayat') ? 'block' : 'none';
+  };
+
+  // ---------- Laba Rugi Bulanan ----------
+
+  window.muatLabaRugi = function () {
+    var bulan = document.getElementById('lrBulan').value;
+    var tahun = document.getElementById('lrTahun').value;
+    fetch(apiUrl('labarugibulanan', { bulan: bulan, tahun: tahun }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (cekSesiExpired(res)) return;
+        if (!res || !res.success) return;
+
+        document.getElementById('lrPenjualan').textContent = formatRp(res.totalPenjualan);
+        document.getElementById('lrHpp').textContent = formatRp(res.totalHpp);
+        document.getElementById('lrLabaKotor').textContent = formatRp(res.labaKotor);
+        document.getElementById('lrPengeluaran').textContent = formatRp(res.totalPengeluaran);
+        document.getElementById('lrLabaBersih').textContent = formatRp(res.labaBersih);
+
+        renderBarList('lrPerJenisList', 'lrPerJenisEmpty', res.penjualanPerJenis, 'jenis');
+        renderBarList('lrPerKategoriList', 'lrPerKategoriEmpty', res.pengeluaranPerKategori, 'kategori');
+      })
+      .catch(function () {});
+  };
+
+  function renderBarList(wrapId, emptyId, list, labelKey) {
+    var wrap = document.getElementById(wrapId);
+    var elEmpty = document.getElementById(emptyId);
+    wrap.innerHTML = '';
+    if (!list || list.length === 0) { elEmpty.style.display = 'block'; return; }
+    elEmpty.style.display = 'none';
+
+    var maxNominal = Math.max.apply(null, list.map(function (x) { return x.nominal; }).concat([1]));
+    var sorted = list.slice().sort(function (a, b) { return b.nominal - a.nominal; });
+
+    sorted.forEach(function (item, idx) {
+      var div = document.createElement('div');
+      div.className = 'rank-item';
+      var lebar = Math.round((item.nominal / maxNominal) * 100);
+      div.innerHTML =
+        '<div class="rank-num">' + (idx + 1) + '</div>' +
+        '<div class="rank-body">' +
+          '<div class="rank-nama">' + escapeHtml(item[labelKey]) + '</div>' +
+          '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + lebar + '%;"></div></div>' +
+        '</div>' +
+        '<div class="rank-qty tabular">' + formatRp(item.nominal) + '</div>';
+      wrap.appendChild(div);
+    });
   }
 
   // ---------- Produk Terlaris & Kurang Laris ----------

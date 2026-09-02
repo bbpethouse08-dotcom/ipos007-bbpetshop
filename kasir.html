@@ -107,9 +107,16 @@
   .settings-body.open { display: block; }
   .hint { font-size: 11.5px; color: var(--ink-dim); margin-top: 8px; line-height: 1.5; }
 
-  .reader-frame { position: relative; border-radius: 11px; overflow: hidden; background: #0a0a08; min-height: 200px; }
+  .subtab-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .subtab-btn {
+    flex: 1; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); font-weight: 700; font-size: 12.5px; cursor: pointer; text-align: center;
+  }
+  .subtab-btn.aktif { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  .reader-frame { position: relative; border-radius: 11px; overflow: hidden; background: #0a0a08; min-height: 150px; max-height: 220px; }
   #reader { width: 100%; }
-  #reader video { display: block; width: 100%; border-radius: 11px; }
+  #reader video { display: block; width: 100%; max-height: 220px; object-fit: cover; border-radius: 11px; }
   .reader-frame::before {
     content: ""; position: absolute; inset: 14%; border-radius: 10px;
     border: 2px solid rgba(255,255,255,.55); pointer-events: none; z-index: 2;
@@ -194,85 +201,126 @@
   <a href="laporan.html"><span class="ic">📊</span><span class="lbl">Laporan</span></a>
 </nav>
 
-<section class="card">
-  <p class="card-label">Scan Barcode</p>
-  <div class="reader-frame">
-    <div id="reader"></div>
-    <div class="reader-placeholder" id="readerPlaceholder">Tekan "Mulai Scan" untuk membuka kamera</div>
-  </div>
-  <div class="scan-controls">
-    <button type="button" class="btn-primary" id="btnStart" onclick="mulaiScan()">▶ Mulai Scan</button>
-    <button type="button" class="btn-ghost" id="btnStop" onclick="hentikanScan()" style="display:none;">Stop</button>
-  </div>
-  <p class="hint">Arahkan kamera ke barcode barang. Barang otomatis masuk ke keranjang begitu terbaca (qty 1) — tinggal ubah qty di keranjang kalau perlu.</p>
+<div class="subtab-row" id="subTabRow" style="display:none;">
+  <button type="button" class="subtab-btn aktif" id="btnSubKasir" onclick="pilihSubTab('kasir')">🛒 Kasir</button>
+  <button type="button" class="subtab-btn" id="btnSubRiwayat" onclick="pilihSubTab('riwayat')">📋 Riwayat</button>
+  <button type="button" class="subtab-btn" id="btnSubShift" onclick="pilihSubTab('shift')">🕐 Shift</button>
+</div>
+
+<section class="card" id="cardShiftGate" style="display:none;">
+  <p class="card-label">Mulai Shift Dulu</p>
+  <p class="hint" style="margin:0 0 12px;">Belum ada shift aktif — isi Kas Awal (uang di laci sebelum mulai jualan) untuk membuka fitur Kasir.</p>
+  <label for="kasAwalInput">Kas Awal</label>
+  <input type="number" id="kasAwalInput" class="tabular" placeholder="0">
+  <button type="button" class="btn-primary" onclick="prosesMulaiShift()">▶ Mulai Shift</button>
+  <div id="statusShiftGate"></div>
 </section>
 
-<section class="card">
-  <p class="card-label">Tambah Item Manual</p>
-  <div class="autocomplete-wrap">
-    <input type="text" id="kode" placeholder="Ketik kode atau nama barang" autocomplete="off">
-    <div id="suggestions"></div>
-  </div>
-  <div class="info-stok" id="infoStok"></div>
-  <div class="qty-row">
-    <div style="flex:1;">
-      <label for="qty">Qty</label>
-      <input type="number" id="qty" class="tabular" value="1" min="1">
+<div id="tabKasir" style="display:none;">
+  <section class="card">
+    <p class="card-label">Scan Barcode</p>
+    <div class="reader-frame">
+      <div id="reader"></div>
+      <div class="reader-placeholder" id="readerPlaceholder">Tekan "Mulai Scan" untuk membuka kamera</div>
     </div>
-  </div>
-  <button type="button" class="btn-primary" onclick="tambahManual()">＋ Tambah ke Keranjang</button>
-  <div id="status" role="status"></div>
-</section>
+    <div class="scan-controls">
+      <button type="button" class="btn-primary" id="btnStart" onclick="mulaiScan()">▶ Mulai Scan</button>
+      <button type="button" class="btn-ghost" id="btnStop" onclick="hentikanScan()" style="display:none;">Stop</button>
+    </div>
+  </section>
 
-<section class="card">
-  <p class="card-label">Keranjang</p>
-  <div id="keranjangWrap">
-    <p class="empty-hint" id="keranjangEmpty">Keranjang masih kosong. Scan atau cari barang di atas.</p>
-    <table id="tabelKeranjang" style="display:none;">
-      <thead><tr><th>Barang</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
-      <tbody id="keranjangBody"></tbody>
-    </table>
-  </div>
-  <div class="cart-total-row">
-    <span class="label">Total</span>
-    <span class="value tabular" id="cartTotal">Rp0</span>
-  </div>
-</section>
+  <section class="card">
+    <p class="card-label">Tambah Item Manual</p>
+    <div class="autocomplete-wrap">
+      <input type="text" id="kode" placeholder="Ketik kode atau nama barang" autocomplete="off">
+      <div id="suggestions"></div>
+    </div>
+    <div class="info-stok" id="infoStok"></div>
+    <div class="qty-row">
+      <div style="flex:1;">
+        <label for="qty">Qty</label>
+        <input type="number" id="qty" class="tabular" value="1" min="1">
+      </div>
+    </div>
+    <button type="button" class="btn-primary" onclick="tambahManual()">＋ Tambah ke Keranjang</button>
+    <div id="status" role="status"></div>
+  </section>
 
-<section class="card">
-  <p class="card-label">Pembayaran</p>
-  <label for="namaPembeli">Nama Pembeli (opsional)</label>
-  <input type="text" id="namaPembeli" placeholder="Umum">
-  <label for="noHpPembeli">No HP (opsional)</label>
-  <input type="text" id="noHpPembeli" class="kode-mono" placeholder="08xxxxxxxxxx">
-  <label for="metodeBayar">Metode Bayar</label>
-  <select id="metodeBayar" onchange="toggleUangDiterima()">
-    <option value="Cash">Cash</option>
-    <option value="QRIS">QRIS</option>
-    <option value="Debit">Debit</option>
-    <option value="Transfer">Transfer</option>
-  </select>
-  <div id="cashFields">
-    <label for="uangDiterima">Uang Diterima</label>
-    <input type="number" id="uangDiterima" class="tabular" placeholder="0" oninput="hitungKembalian()">
-    <p class="hint" id="kembalianHint">Kembalian: Rp0</p>
-  </div>
-  <label for="catatan">Catatan (opsional)</label>
-  <input type="text" id="catatan" placeholder="mis. minta bungkus kado">
-  <button type="button" class="btn-primary" id="btnBayar" onclick="prosesPembayaran()">Proses Pembayaran</button>
-  <div id="receiptWrap"></div>
-</section>
+  <section class="card">
+    <p class="card-label">Keranjang</p>
+    <div id="keranjangWrap">
+      <p class="empty-hint" id="keranjangEmpty">Keranjang masih kosong. Scan atau cari barang di atas.</p>
+      <table id="tabelKeranjang" style="display:none;">
+        <thead><tr><th>Barang</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
+        <tbody id="keranjangBody"></tbody>
+      </table>
+    </div>
+    <div class="cart-total-row">
+      <span class="label">Total</span>
+      <span class="value tabular" id="cartTotal">Rp0</span>
+    </div>
+  </section>
 
-<section class="card">
-  <p class="card-label">Riwayat Transaksi</p>
-  <div class="riwayat-scroll">
-    <table class="riwayat" id="tabelRiwayat">
-      <thead><tr><th>Waktu</th><th>ID</th><th>Total</th><th>Metode</th><th></th></tr></thead>
-      <tbody id="riwayatBody"></tbody>
-    </table>
-  </div>
-  <p class="empty-hint" id="riwayatEmpty">Belum ada transaksi.</p>
-</section>
+  <section class="card">
+    <p class="card-label">Pembayaran</p>
+    <label for="namaPembeli">Nama Pembeli (opsional)</label>
+    <input type="text" id="namaPembeli" placeholder="Umum">
+    <label for="noHpPembeli">No HP (opsional)</label>
+    <input type="text" id="noHpPembeli" class="kode-mono" placeholder="08xxxxxxxxxx">
+    <label for="metodeBayar">Metode Bayar</label>
+    <select id="metodeBayar" onchange="toggleUangDiterima()">
+      <option value="Cash">Cash</option>
+      <option value="QRIS">QRIS</option>
+      <option value="Debit">Debit</option>
+      <option value="Transfer">Transfer</option>
+    </select>
+    <div id="cashFields">
+      <label for="uangDiterima">Uang Diterima</label>
+      <input type="number" id="uangDiterima" class="tabular" placeholder="0" oninput="hitungKembalian()">
+      <p class="hint" id="kembalianHint">Kembalian: Rp0</p>
+    </div>
+    <label for="catatan">Catatan (opsional)</label>
+    <input type="text" id="catatan" placeholder="mis. minta bungkus kado">
+    <button type="button" class="btn-primary" id="btnBayar" onclick="prosesPembayaran()">Proses Pembayaran</button>
+    <div id="receiptWrap"></div>
+  </section>
+</div>
+
+<div id="tabRiwayat" style="display:none;">
+  <section class="card">
+    <p class="card-label">Riwayat Transaksi</p>
+    <div class="riwayat-scroll">
+      <table class="riwayat" id="tabelRiwayat">
+        <thead><tr><th>Waktu</th><th>ID</th><th>Total</th><th>Metode</th><th></th></tr></thead>
+        <tbody id="riwayatBody"></tbody>
+      </table>
+    </div>
+    <p class="empty-hint" id="riwayatEmpty">Belum ada transaksi.</p>
+  </section>
+</div>
+
+<div id="tabShift" style="display:none;">
+  <section class="card">
+    <p class="card-label">Shift Aktif</p>
+    <div class="info-stok" id="infoShiftAktif"></div>
+    <label for="kasAkhirInput">Kas Akhir (hasil hitung fisik di laci)</label>
+    <input type="number" id="kasAkhirInput" class="tabular" placeholder="0">
+    <label for="catatanShiftInput">Catatan (opsional)</label>
+    <input type="text" id="catatanShiftInput" placeholder="mis. selisih karena kembalian salah">
+    <button type="button" class="btn-primary" onclick="prosesTutupShift()">⏹ Tutup Shift</button>
+    <div id="statusShift"></div>
+  </section>
+  <section class="card">
+    <p class="card-label">Riwayat Shift Terakhir</p>
+    <div class="riwayat-scroll">
+      <table class="riwayat" id="tabelRiwayatShift">
+        <thead><tr><th>Nama</th><th>Mulai</th><th>Tutup</th><th>Kas Awal</th><th>Selisih</th></tr></thead>
+        <tbody id="riwayatShiftBody"></tbody>
+      </table>
+    </div>
+    <p class="empty-hint" id="riwayatShiftEmpty">Belum ada riwayat shift.</p>
+  </section>
+</div>
 
 <p class="footer-note">Setiap transaksi otomatis mengurangi Stok di Master Barang UTM.</p>
 
@@ -283,7 +331,7 @@
   'use strict';
 
   // GANTI dengan URL Web App Anda (sama seperti di halaman lain).
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzbAp3WIwY2yu27Unbnh30nW802W1_BT-Ulmu8UIOEl2xmZP93_FF-Pj4GZS_8PKJX0Tw/exec';
+  var WEB_APP_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA';
 
   var LS_SESSION = 'bb_session_token';
   var LS_NAMA = 'bb_session_nama';
@@ -322,6 +370,26 @@
 
   var elRiwayatBody = document.getElementById('riwayatBody');
   var elRiwayatEmpty = document.getElementById('riwayatEmpty');
+
+  var elSubTabRow = document.getElementById('subTabRow');
+  var elBtnSubKasir = document.getElementById('btnSubKasir');
+  var elBtnSubRiwayat = document.getElementById('btnSubRiwayat');
+  var elBtnSubShift = document.getElementById('btnSubShift');
+  var elTabKasir = document.getElementById('tabKasir');
+  var elTabRiwayat = document.getElementById('tabRiwayat');
+  var elTabShift = document.getElementById('tabShift');
+  var elCardShiftGate = document.getElementById('cardShiftGate');
+  var elKasAwalInput = document.getElementById('kasAwalInput');
+  var elStatusShiftGate = document.getElementById('statusShiftGate');
+  var elInfoShiftAktif = document.getElementById('infoShiftAktif');
+  var elKasAkhirInput = document.getElementById('kasAkhirInput');
+  var elCatatanShiftInput = document.getElementById('catatanShiftInput');
+  var elStatusShift = document.getElementById('statusShift');
+  var elRiwayatShiftBody = document.getElementById('riwayatShiftBody');
+  var elRiwayatShiftEmpty = document.getElementById('riwayatShiftEmpty');
+
+  var subTabAktif = 'kasir';
+  var shiftAktifData = null;
 
   var daftarBarang = [];
   var keranjang = []; // { kode, nama, satuan, hargaJual, stok, qty }
@@ -369,6 +437,116 @@
       });
     }
     return WEB_APP_URL + '?' + qs;
+  }
+
+  // ---------- Sub-tab ----------
+
+  window.pilihSubTab = function (tab) {
+    subTabAktif = tab;
+    elBtnSubKasir.classList.toggle('aktif', tab === 'kasir');
+    elBtnSubRiwayat.classList.toggle('aktif', tab === 'riwayat');
+    elBtnSubShift.classList.toggle('aktif', tab === 'shift');
+    elTabKasir.style.display = (tab === 'kasir') ? 'block' : 'none';
+    elTabRiwayat.style.display = (tab === 'riwayat') ? 'block' : 'none';
+    elTabShift.style.display = (tab === 'shift') ? 'block' : 'none';
+    if (tab === 'riwayat') muatRiwayat();
+    if (tab === 'shift') muatRiwayatShift();
+  };
+
+  // ---------- Shift Kasir ----------
+
+  function muatShiftAktif() {
+    fetch(apiUrl('shiftaktif'))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (cekSesiExpired(res)) return;
+        shiftAktifData = (res && res.success) ? res.shift : null;
+        perbaruiTampilanShift();
+      })
+      .catch(function () {});
+  }
+
+  function perbaruiTampilanShift() {
+    if (shiftAktifData) {
+      elSubTabRow.style.display = 'flex';
+      elCardShiftGate.style.display = 'none';
+      pilihSubTab(subTabAktif);
+      elInfoShiftAktif.innerHTML =
+        '<div class="baris"><span class="label">Mulai Shift</span><span class="nilai">' + escapeHtml(shiftAktifData.waktuMulai) + '</span></div>' +
+        '<div class="baris"><span class="label">Kas Awal</span><span class="nilai">' + formatRp(shiftAktifData.kasAwal) + '</span></div>';
+      elInfoShiftAktif.style.display = 'block';
+      muatDaftarBarang();
+      muatRiwayat();
+    } else {
+      elSubTabRow.style.display = 'none';
+      elCardShiftGate.style.display = 'block';
+      elTabKasir.style.display = 'none';
+      elTabRiwayat.style.display = 'none';
+      elTabShift.style.display = 'none';
+    }
+  }
+
+  window.prosesMulaiShift = function () {
+    var kasAwal = elKasAwalInput.value;
+    if (!kasAwal) { elStatusShiftGate.className = 'error'; elStatusShiftGate.textContent = 'Isi Kas Awal dulu.'; return; }
+    fetch(apiUrl('mulaishift', { kasAwal: kasAwal }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (cekSesiExpired(res)) return;
+        if (res && res.success) {
+          elKasAwalInput.value = '';
+          muatShiftAktif();
+        } else {
+          elStatusShiftGate.className = 'error'; elStatusShiftGate.textContent = (res && res.message) || 'Gagal mulai shift.';
+        }
+      })
+      .catch(function () { elStatusShiftGate.className = 'error'; elStatusShiftGate.textContent = 'Gagal terhubung ke Apps Script.'; });
+  };
+
+  window.prosesTutupShift = function () {
+    var kasAkhir = elKasAkhirInput.value;
+    if (!kasAkhir) { elStatusShift.className = 'error'; elStatusShift.textContent = 'Isi Kas Akhir dulu.'; return; }
+    if (!confirm('Yakin mau tutup shift? Pastikan Kas Akhir sudah dihitung dengan benar.')) return;
+    fetch(apiUrl('tutupshift', { kasAkhir: kasAkhir, catatan: elCatatanShiftInput.value.trim() }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (cekSesiExpired(res)) return;
+        if (res && res.success) {
+          var pesanSelisih = res.selisih === 0 ? 'Pas, tidak ada selisih.' : (res.selisih > 0 ? 'Lebih Rp' + res.selisih.toLocaleString('id-ID') : 'Kurang Rp' + Math.abs(res.selisih).toLocaleString('id-ID'));
+          elStatusShift.className = 'ok'; elStatusShift.textContent = 'Shift ditutup. ' + pesanSelisih;
+          elKasAkhirInput.value = ''; elCatatanShiftInput.value = '';
+          shiftAktifData = null;
+          setTimeout(perbaruiTampilanShift, 1200);
+        } else {
+          elStatusShift.className = 'error'; elStatusShift.textContent = (res && res.message) || 'Gagal tutup shift.';
+        }
+      })
+      .catch(function () { elStatusShift.className = 'error'; elStatusShift.textContent = 'Gagal terhubung ke Apps Script.'; });
+  };
+
+  function muatRiwayatShift() {
+    fetch(apiUrl('riwayatshift', { limit: 10 }))
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (cekSesiExpired(res)) return;
+        if (!res || !res.success) return;
+        var list = res.riwayat || [];
+        elRiwayatShiftBody.innerHTML = '';
+        if (list.length === 0) { elRiwayatShiftEmpty.style.display = 'block'; return; }
+        elRiwayatShiftEmpty.style.display = 'none';
+        list.forEach(function (s) {
+          var tr = document.createElement('tr');
+          var tdNama = document.createElement('td'); tdNama.textContent = s.nama; tr.appendChild(tdNama);
+          var tdMulai = document.createElement('td'); tdMulai.textContent = s.waktuMulai; tr.appendChild(tdMulai);
+          var tdTutup = document.createElement('td'); tdTutup.textContent = s.waktuTutup || '(aktif)'; tr.appendChild(tdTutup);
+          var tdKasAwal = document.createElement('td'); tdKasAwal.className = 'tabular'; tdKasAwal.textContent = formatRp(s.kasAwal); tr.appendChild(tdKasAwal);
+          var tdSelisih = document.createElement('td'); tdSelisih.className = 'tabular';
+          tdSelisih.textContent = (s.selisih === null) ? '-' : formatRp(s.selisih);
+          tr.appendChild(tdSelisih);
+          elRiwayatShiftBody.appendChild(tr);
+        });
+      })
+      .catch(function () {});
   }
 
   // ---------- Daftar barang (Master Barang UTM) ----------
@@ -768,9 +946,8 @@
   elHeaderNama.textContent = namaUser;
   elHeaderRole.textContent = roleUser;
 
-  muatDaftarBarang();
-  muatRiwayat();
   renderKeranjang();
+  muatShiftAktif();
 })();
 </script>
 </body>
